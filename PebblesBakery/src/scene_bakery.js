@@ -51,6 +51,8 @@ var BakeryGameLayer = cc.Layer.extend({
 	state:BSTATES.IDLE,
 	draggeddoughsprite:null,
 	draggedrollsprite:null,
+	sittingdoughsprite:null,
+	sittingrollsprite:null,
 	touchPos:null,
 	touching:false,
 	dough:null,
@@ -69,13 +71,20 @@ var BakeryGameLayer = cc.Layer.extend({
 		dough = new Dough(cc.p(2*16, 8*16));
 		desk = new Desk(cc.p(5*16, 1*16));
 		oven = new Oven(cc.p(12*16, 3*16));
-		draggeddoughsprite = new cc.Sprite(res.bakery_roll_dough_png);
-		draggedrollsprite = new cc.Sprite(res.bakery_roll_png);
+		draggeddoughsprite = new cc.Sprite(res.bakery_dough_portion_png);
+		draggedrollsprite = new cc.Sprite(res.bakery_roll_raw_png);
+		sittingdoughsprite = new cc.Sprite(res.bakery_dough_portion_png);
+		var on_desk_pos = cc.p(desk.x+32,desk.y+32);
+		sittingdoughsprite.setPosition(on_desk_pos);// + cc.p(48,48));
+		sittingrollsprite = new cc.Sprite(res.bakery_roll_raw_png);
+		sittingrollsprite.setPosition(on_desk_pos);// + cc.p(48,48));
 		this.addChild(dough);
 		this.addChild(desk);
 		this.addChild(oven);
 		this.addChild(draggeddoughsprite);
 		this.addChild(draggedrollsprite); 
+		this.addChild(sittingdoughsprite);
+		this.addChild(sittingrollsprite); 
 		
 		var touchlistener = cc.EventListener.create({
 			event: cc.EventListener.TOUCH_ONE_BY_ONE,
@@ -115,6 +124,7 @@ var BakeryGameLayer = cc.Layer.extend({
 				//drag kneaded roll from desk
 				if (touching && desk.hovered(touchPos)) {
 					state = BSTATES.DRAG2;
+					desk.empty = true;
 				}
 			}
 			
@@ -123,35 +133,40 @@ var BakeryGameLayer = cc.Layer.extend({
 			if (!touching)
 				state = BSTATES.IDLE;
 			//desk hovered & desk == empty -> KNEADING
-			if (desk.hovered(touchPos) && desk.empty)
+			else if (desk.hovered(touchPos) && desk.empty)
 			{
 				state = BSTATES.KNEADING;
 				countdown = maxcountdown;
 				desk.empty = false;
-				//TODO show kneading dough
+				desk.filledwith = 0; //raw dough
 			}
 		} else if (state === BSTATES.KNEADING) {
 			if(countdown <= 0) {
 				state = BSTATES.IDLE;
-				//TODO show finished kneaded roll
+				desk.filledwith = 1; //raw roll
 			}
 		} else if (state === BSTATES.DRAG2) {
 			//(roll) released -> IDLE
-			if (!touching)
+			if (!touching) {
 				state = BSTATES.IDLE;
+				desk.empty = false;
+			}
 			//oven hovered & oven != full -> IDLE + desk := empty
-			if (oven.hovered(touchPos) && !oven.isFull())
+			else if (oven.hovered(touchPos) && !oven.isFull())
 			{
 				state = BSTATES.IDLE;
-				desk.empty = true;
 				//TODO add roll to oven
 				oven.addRoll();
 			}
 		}
 		
-		 draggeddoughsprite.setVisible(state == BSTATES.DRAG1);
-		 draggedrollsprite.setVisible(state == BSTATES.DRAG2);
+		 draggeddoughsprite.setVisible(state === BSTATES.DRAG1);
+		 draggedrollsprite.setVisible(state === BSTATES.DRAG2);
 		 //ARM.setVisible(state == BSTATES.DRAG1 || state == BSTATES.DRAG2);
+		 
+		 
+		 sittingdoughsprite.setVisible(desk.filledwith === 0 && !desk.empty);
+		 sittingrollsprite.setVisible(desk.filledwith === 1 && !desk.empty);
 		 
 		//Actions
 		if (state == BSTATES.IDLE) {
@@ -175,10 +190,8 @@ var BakeryGameLayer = cc.Layer.extend({
 
 
 var Dough = cc.Sprite.extend({
-	touchbegan:false,
-	touchended:false,
 	ctor:function(pos) {
-		this._super(res.bakery_roll_dough_png);
+		this._super(res.bakery_dough_portion_png);
 		cc.associateWithNative( this, cc.Sprite );
 		this.setAnchorPoint(cc.p(0,0));
 		this.setPosition(pos);
@@ -196,8 +209,7 @@ var Dough = cc.Sprite.extend({
 
 
 var Desk = cc.Sprite.extend({
-	touchbegan:false,
-	touchended:false,
+	filledwith:0,
 	empty:true,
 	ctor:function(pos) {
 		this._super(res.bakery_desk_png);
