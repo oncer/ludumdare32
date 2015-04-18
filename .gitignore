@@ -1,0 +1,6 @@
+CMakeLists.txt
+/PebblesBakery/frameworks
+/PebblesBakery/*build
+/PebblesBakery/runtime
+/PebblesBakery/tools
+
