@@ -5,9 +5,10 @@ var res = {
 	bakery_bg_png : "res/bakery_bg.png",
 	bakery_desk_png : "res/bakery_desk.png",
 	bakery_oven_png : "res/bakery_oven.png",
-	bakery_roll_png : "res/bakery_roll.png",
+	bakery_roll_raw_png : "res/bakery_roll_raw.png",
 	bakery_roll_done_png : "res/bakery_roll_done.png",
 	bakery_roll_burnt_png : "res/bakery_roll_burnt.png",
+<<<<<<< HEAD
 	bakery_roll_dough_png : "res/bakery_roll_dough.png",
 	shop_roll_png : "res/shop_roll.png",
 	bear_png : "res/bear.png",
@@ -25,6 +26,9 @@ var res = {
 	bear_hurt2_png : "res/bear_hurt2.png",
 	bear_hurt3_png : "res/bear_hurt3.png",
 	*/
+=======
+	bakery_dough_portion_png : "res/bakery_dough_portion.png"
+>>>>>>> cd3af15ccad62bd710ae8f7540f51c2ddc242f04
 };
 
 var g_resources = [];
