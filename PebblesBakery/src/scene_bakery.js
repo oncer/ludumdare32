@@ -30,6 +30,7 @@ var BakeryBGLayer = cc.Layer.extend({
 			anchorY: 0
         });*/
 		spriteBG.setAnchorPoint(cc.p(0,0));
+		
         this.addChild(spriteBG);
 		
         return true;
@@ -55,11 +56,15 @@ var BakeryGameLayer = cc.Layer.extend({
 	dough:null,
 	desk:null,
 	oven:null,
+	countdown:0,
+	maxcountdown:3,
     ctor:function () {
         this._super();
 		//console.debug("TEST");
 		state = BSTATES.IDLE;
 		touching = false;
+		countdown = 0;
+		maxcountdown = 3;
 		
 		dough = new Dough(cc.p(2*16, 8*16));
 		desk = new Desk(cc.p(5*16, 1*16));
@@ -69,8 +74,8 @@ var BakeryGameLayer = cc.Layer.extend({
 		this.addChild(dough);
 		this.addChild(desk);
 		this.addChild(oven);
-		//this.addChild(draggeddoughsprite);
-		//this.addChild(draggedrollsprite); 
+		this.addChild(draggeddoughsprite);
+		this.addChild(draggedrollsprite); 
 		
 		var touchlistener = cc.EventListener.create({
 			event: cc.EventListener.TOUCH_ONE_BY_ONE,
@@ -96,54 +101,72 @@ var BakeryGameLayer = cc.Layer.extend({
     },
 	update:function(dt)
 	{
-		 draggeddoughsprite.setVisible(state == BSTATES.DRAG1);
-		 draggedrollsprite.setVisible(state == BSTATES.DRAG2);
-		 //ARM.setVisible(state == BSTATES.DRAG1 || state == BSTATES.DRAG2);
 		
 			//console.debug(state);
 		//Transitions
-		if (state === BSTATES.IDLE)
-		{
-			//drag from dough
-			if (touching && dough.hovered(touchPos)) {
-				state = BSTATES.DRAG1;
+		if (state === BSTATES.IDLE) {
+		
+			if (desk.empty){
+				//drag from dough
+				if (touching && dough.hovered(touchPos)) {
+					state = BSTATES.DRAG1;
+				}
+			} else {
+				//drag kneaded roll from desk
+				if (touching && desk.hovered(touchPos)) {
+					state = BSTATES.DRAG2;
+				}
 			}
-			//desk hovered & desk != empty -> DRAG2, desk := empty
-			//[...]
-		} else if (state === BSTATES.DRAG1)
-		{
+			
+		} else if (state === BSTATES.DRAG1) {
 			//(dough) released -> IDLE
 			if (!touching)
 				state = BSTATES.IDLE;
 			//desk hovered & desk == empty -> KNEADING
-			//[...]
-		} else if (state === BSTATES.KNEADING)
-		{
-			//timer 0 -> IDLE
-			//[...]
-		} else if (state === BSTATES.DRAG2)
-		{
+			if (desk.hovered(touchPos) && desk.empty)
+			{
+				state = BSTATES.KNEADING;
+				countdown = maxcountdown;
+				desk.empty = false;
+				//TODO show kneading dough
+			}
+		} else if (state === BSTATES.KNEADING) {
+			if(countdown <= 0) {
+				state = BSTATES.IDLE;
+				//TODO show finished kneaded roll
+			}
+		} else if (state === BSTATES.DRAG2) {
 			//(roll) released -> IDLE
-			//[...]
-			//oven hovered & oven != full
-			//[...]
+			if (!touching)
+				state = BSTATES.IDLE;
+			//oven hovered & oven != full -> IDLE + desk := empty
+			if (oven.hovered(touchPos) && !oven.isFull())
+			{
+				state = BSTATES.IDLE;
+				desk.empty = true;
+				//TODO add roll to oven
+				oven.addRoll();
+			}
 		}
 		
+		 draggeddoughsprite.setVisible(state == BSTATES.DRAG1);
+		 draggedrollsprite.setVisible(state == BSTATES.DRAG2);
+		 //ARM.setVisible(state == BSTATES.DRAG1 || state == BSTATES.DRAG2);
+		 
 		//Actions
-		if (state == BSTATES.IDLE)
-		{
+		if (state == BSTATES.IDLE) {
 			//do nothing
-		} else if (state === BSTATES.DRAG1)
-		{
+		} else if (state === BSTATES.DRAG1) {
 			//show arm + dough, update positions
 			draggeddoughsprite.setPosition(touchPos);
-		} else if (state === BSTATES.KNEADING)
-		{
+		} else if (state === BSTATES.KNEADING) {
 			//arm action
+			//[...]
 			//timer
-		} else if (state === BSTATES.DRAG2)
-		{
+			countdown -= dt;
+		} else if (state === BSTATES.DRAG2) {
 			//show arm + kneaded roll
+			draggedrollsprite.setPosition(touchPos);
 		}
 		
 	}
@@ -208,19 +231,23 @@ var Oven = cc.Sprite.extend({
 		return true;
 	},
 	nextEmpty:function() {
-		if (empty[0])
+		if (this.empty[0])
 			return 0;
-		else if (empty[1])
+		else if (this.empty[1])
 			return 1;
-		else if (empty[2])
+		else if (this.empty[2])
 			return 2;
-		else if (empty[3])
+		else if (this.empty[3])
 			return 3;
 		else
 			return -1;
 	},
 	isFull:function() {
-		return nextEmpty == -1;
+		return this.nextEmpty() == -1;
+	},
+	addRoll:function() {
+		var i = this.nextEmpty();
+		
 	},
 	hovered:function(pos)
 	{
