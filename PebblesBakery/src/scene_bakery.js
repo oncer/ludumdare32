@@ -56,7 +56,6 @@ var BakeryGameLayer = cc.Layer.extend({
 	sittingrollsprite:null,
 	touchPos:null,
 	touching:false,
-	touchmoved:false,
 	dough:null,
 	desk:null,
 	oven:null,
@@ -67,22 +66,27 @@ var BakeryGameLayer = cc.Layer.extend({
 		//console.debug("TEST");
 		state = BSTATES.IDLE;
 		touching = false;
-		touchmoved = false;
+		touchstarted = false;
 		countdown = 0;
 		maxcountdown = 3;
 		
-		dough = new Dough(cc.p(2*16, 8*16));
-		desk = new Desk(cc.p(5*16, 1*16));
-		oven = new Oven(cc.p(12*16, 3*16));
+		var deskpos = cc.p(80, 20);
+		var ovenpos = cc.p(192, 52);
+		dough = new Dough(cc.p(1*16, 7*16));
+		desk = new Desk(deskpos, cc.p(80, 80));
+		oven = new Oven(ovenpos, cc.p(96, 96));
+		
 		draggeddoughsprite = new cc.Sprite(res.bakery_dough_portion_png);
 		draggeddoughsprite.setLocalZOrder(1);
 		draggedrollsprite = new cc.Sprite(res.bakery_roll_raw_png);
 		draggedrollsprite.setLocalZOrder(1);
+		
 		sittingdoughsprite = new cc.Sprite(res.bakery_dough_portion_png);
-		var on_desk_pos = cc.p(desk.x+40,desk.y+40);
+		var on_desk_pos = cc.p(deskpos.x+40,deskpos.y+40);
 		sittingdoughsprite.setPosition(on_desk_pos);// + cc.p(48,48));
 		sittingrollsprite = new cc.Sprite(res.bakery_roll_raw_png);
 		sittingrollsprite.setPosition(on_desk_pos);// + cc.p(48,48));
+		
 		this.addChild(dough);
 		this.addChild(desk);
 		this.addChild(oven);
@@ -97,16 +101,18 @@ var BakeryGameLayer = cc.Layer.extend({
 			onTouchBegan: function (touch, event) { 
 				touchPos = touch.getLocation();
 				touching = true;
-				touchmoved = false;
+				touchstarted = true;
+				console.debug(touchPos);
 				return true;
 			},
 			onTouchMoved: function (touch, event) { 
 				touchPos = touch.getLocation();
-				touchmoved = true;
+				touchstarted = false;
 			},
 			onTouchEnded: function (touch, event) {         
 				touchPos = null;
 				touching = false;
+				touchstarted = false;
 			}
 		});
 		cc.eventManager.addListener(touchlistener, this);
@@ -124,12 +130,12 @@ var BakeryGameLayer = cc.Layer.extend({
 		
 			
 			//drag from dough
-			if (touching && dough.hovered(touchPos)) {
+			if (touchstarted && dough.hovered(touchPos)) {
 				state = BSTATES.DRAG1;
 			}
 			else {
 				//drag kneaded roll from desk
-				if (touching && desk.hovered(touchPos)) {
+				if (touchstarted && desk.hovered(touchPos)) {
 					state = BSTATES.DRAG2;
 					desk.empty = true;
 				}
@@ -142,7 +148,6 @@ var BakeryGameLayer = cc.Layer.extend({
 			//desk hovered & desk == empty -> KNEADING
 			else if (desk.hovered(touchPos) && desk.empty)
 			{
-				touching = false;
 				state = BSTATES.KNEADING;
 				countdown = maxcountdown;
 				desk.empty = false;
@@ -193,7 +198,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		}
 		
 		//take roll out of oven
-		if (touching && !touchmoved && state == BSTATES.IDLE)
+		if (touchstarted && state == BSTATES.IDLE)
 		{
 			var touched_roll = oven.touch(touchPos);
 			if (touched_roll != null)
@@ -208,12 +213,12 @@ var BakeryGameLayer = cc.Layer.extend({
 		
 	}
 	
-});  //TODO ROLLSOR AT LEAST THEIR IMAGES ARE NOT REMOVED WHEN TOUCHED IN OVEN
+});
 
 
 var Dough = cc.Sprite.extend({
 	ctor:function(pos) {
-		this._super(res.bakery_dough_portion_png);
+		this._super(res.bakery_dough_png);
 		cc.associateWithNative( this, cc.Sprite );
 		this.setAnchorPoint(cc.p(0,0));
 		this.setPosition(pos);
@@ -232,23 +237,21 @@ var Dough = cc.Sprite.extend({
 
 var Desk = cc.Sprite.extend({
 	filledwith:0,
+	pos:null,
+	size:null,
 	empty:true,
-	ctor:function(pos) {
-		this._super(res.bakery_desk_png);
+	ctor:function(pos, size) {
+		this._super();
 		cc.associateWithNative( this, cc.Sprite );
 		
-		this.setAnchorPoint(cc.p(0,0));
-		this.setPosition(pos);
-		
+		this.pos = pos;
+		this.size = size;
 		return true;
 	},
 	hovered:function(pos)
 	{
-		var locationInNode = this.convertToNodeSpace(pos);    
-		var s = this.getContentSize();
-		var rect = cc.rect(0, 0, s.width, s.height);
-		
-		return (cc.rectContainsPoint(rect, locationInNode));   
+		var rect = cc.rect(this.pos.x,this.pos.y,this.size.x,this.size.y);
+		return (cc.rectContainsPoint(rect, pos));  
 	}
 });
 
@@ -256,20 +259,24 @@ var Roll = cc.Sprite.extend({
 	state:0,
 	index:0,
 	timealive:0,
+	pos:null,
+	size:null,
 	sprite:[null,null,null],
 	ctor:function(i) {
 		this._super();
 		cc.associateWithNative( this, cc.Sprite );
 		this.index = i;
-		var px = 0;
-		var py = 0;
-		var dx = 48;
-		var dy = dx;
+		var px = 190;
+		var py = 52;
+		var dx = 49;
+		var dy = 48;
+		this.pos = cc.p(px+(i%2)*dx,py+Math.floor(i/2)*dy);
+		this.size = cc.p(48,48);
 		this.sprite[0] = new cc.Sprite(res.bakery_roll_raw_png);
 		this.sprite[1] = new cc.Sprite(res.bakery_roll_done_png);
 		this.sprite[2] = new cc.Sprite(res.bakery_roll_burnt_png);
 		for (var k = 0; k < this.sprite.length; ++k) {
-			this.sprite[k].setPosition(cc.p(px+(i%2)*dx,py+Math.floor(i/2)*dy));
+			this.sprite[k].setPosition(this.pos);
 			this.sprite[k].setAnchorPoint(cc.p(0,0));
 			this.sprite[k].setVisible(k === 0);
 			this.addChild(this.sprite[k]);
@@ -292,26 +299,24 @@ var Roll = cc.Sprite.extend({
 				this.sprite[k].setVisible(k === this.state);
 			}
 	},
-	hovered:function(pos)
-	{
-		var locationInNode = this.getParent().convertToNodeSpace(pos);    
-		var s = this.sprite[this.state].getContentSize();
-		var rect = cc.rect(0, 0, s.width, s.height);
-		
-		return (cc.rectContainsPoint(rect, locationInNode));   
+	hovered:function(pos) {
+		var rect = cc.rect(this.pos.x,this.pos.y,this.size.x,this.size.y);
+		return (cc.rectContainsPoint(rect, pos));  
 	}
 
 });
 
 
 var Oven = cc.Sprite.extend({
-	empty:[true,true,true,true],
 	rolls:[null,null,null,null],
-	ctor:function(pos) {
-		this._super(res.bakery_oven_png);
+	pos:null,
+	size:null,
+	ctor:function(pos, size) {
+		this._super();
 		cc.associateWithNative( this, cc.Sprite );
-		this.setAnchorPoint(cc.p(0,0));
-		this.setPosition(pos);
+		
+		this.pos = pos;
+		this.size = size;
 		return true;
 	},
 	nextEmpty:function() {
@@ -336,9 +341,7 @@ var Oven = cc.Sprite.extend({
 		}
 	},
 	removeRoll:function(i) {
-		this.rolls[i] = new Roll(i);
-		this.rolls[i].removeAllChildrenWithCleanup();
-		this.removeChild(this.rolls[i], true);
+		this.rolls[i].removeFromParent(true);
 		this.rolls[i] = null;
 	},
 	touch:function(pos){
@@ -351,10 +354,7 @@ var Oven = cc.Sprite.extend({
 	},
 	hovered:function(pos)
 	{
-		var locationInNode = this.convertToNodeSpace(pos);    
-		var s = this.getContentSize();
-		var rect = cc.rect(0, 0, s.width, s.height);
-		
-		return (cc.rectContainsPoint(rect, locationInNode));   
+		var rect = cc.rect(this.pos.x,this.pos.y,this.size.x,this.size.y);
+		return (cc.rectContainsPoint(rect, pos));  
 	}
 });
