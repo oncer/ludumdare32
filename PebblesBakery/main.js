@@ -59,10 +59,16 @@ cc.game.onStart = function(){
     var policy = new cc.ResolutionPolicy(cc.ContainerStrategy.ORIGINAL_CONTAINER, cc.ContentStrategy.EXACT_FIT);
     cc.view.setDesignResolutionSize(320, 180, policy);
     // The game will be resized when browser size change
-    cc.view.resizeWithBrowserSize(true);
+    cc.view.resizeWithBrowserSize(false);
     //load resources
     cc.LoaderScene.preload(g_resources, function () {
-        cc.director.runScene(new BakeryScene());
+        cc.director.runScene(new StoreScene());
     }, this);
+
+    if (cc._renderContext instanceof WebGLRenderingContext) {
+
+    } else if (cc._renderContext._context instanceof CanvasRenderingContext2D) {
+        cc._renderContext._context.imageSmoothingEnabled = false;
+    }
 };
 cc.game.run();
