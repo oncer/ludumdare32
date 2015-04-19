@@ -53,6 +53,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		//console.debug("TEST");
 		state = BSTATES.IDLE;
 		touching = false;
+		touchStartPos = cc.p(-1,-1);
 		mousePos = cc.p(-64,-64);
 		touchstarted = false;
 		countdown = 0;
@@ -93,6 +94,7 @@ var BakeryGameLayer = cc.Layer.extend({
 			swallowTouches: true,
 			onTouchBegan: function (touch, event) { 
 				touchPos = touch.getLocation();
+				touchStartPos = touchPos;
 				touching = true;
 				touchstarted = true;
 				console.debug(touchPos);
@@ -123,21 +125,17 @@ var BakeryGameLayer = cc.Layer.extend({
 	{
 		oven.updateRolls(dt);
 		
-		
-		clawsprite.setPosition(mousePos);
-		
-		
 		//Transitions
 		if (state === BSTATES.IDLE) {
-		
 			
 			//drag from dough
-			if (touchstarted && dough.hovered(touchPos)) {
+			if (touchstarted && dough.hovered(touchStartPos)) {
 				state = BSTATES.DRAG1;
+				
 			}
 			else {
 				//drag kneaded roll from desk
-				if (touchstarted && desk.hovered(touchPos) && !desk.empty) {
+				if (touchstarted && desk.hovered(touchStartPos) && !desk.empty) {
 					state = BSTATES.DRAG2;
 					desk.empty = true;
 				}
@@ -175,6 +173,26 @@ var BakeryGameLayer = cc.Layer.extend({
 			}
 		}
 		
+		//Bear claw positions
+		if (state !== BSTATES.KNEADING) {
+			clawsprite.setPosition(mousePos);
+		} else {
+			var t = countdown/maxcountdown; // [1 --> 0]
+			t = Math.abs(Math.sin(t*10));//Math.max(Math.min(t,1),0); //clamp to 0,1
+			
+			//t [1, 0.5] --> dy [1 -> 0]
+			var dy;
+			if (t > 0.5)
+				dy = (t - 0.5) * 2;
+			//t [0.5, 0] --> dy [0 -> 1]
+			else 
+				dy = (0.5 - t) * 2;
+				
+			var px = 124;
+			var py = 54;
+			var sy = 20;
+			clawsprite.setPosition(cc.p(px,py+dy*sy));
+		}
 		
 		draggeddoughsprite.setVisible(state === BSTATES.DRAG1);
 		draggedrollsprite.setVisible(state === BSTATES.DRAG2);
