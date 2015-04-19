@@ -56,35 +56,37 @@ var BakeryGameLayer = cc.Layer.extend({
 		mousePos = cc.p(-64,-64);
 		touchstarted = false;
 		countdown = 0;
-		maxcountdown = 3;
+		maxcountdown = 2;
 		
 		var deskpos = cc.p(80, 20);
 		var ovenpos = cc.p(192, 52);
 		dough = new Dough(cc.p(1*16, 7*16));
 		desk = new Desk(deskpos, cc.p(80, 80));
 		oven = new Oven(ovenpos, cc.p(96, 96));
+		this.addChild(dough);
+		this.addChild(desk);
+		this.addChild(oven);
 		
 		clawsprite = new cc.Sprite(res.bakery_claw_png);
 		clawsprite.setLocalZOrder(2);
+		clawsprite.setAnchorPoint(cc.p(0.6,0.85));
+		this.addChild(clawsprite);
 		
 		draggeddoughsprite = new cc.Sprite(res.bakery_dough_portion_png);
 		draggeddoughsprite.setLocalZOrder(1);
 		draggedrollsprite = new cc.Sprite(res.bakery_roll_raw_png);
 		draggedrollsprite.setLocalZOrder(1);
+		this.addChild(draggeddoughsprite);
+		this.addChild(draggedrollsprite); 
 		
 		sittingdoughsprite = new cc.Sprite(res.bakery_dough_portion_png);
 		var on_desk_pos = cc.p(deskpos.x+40,deskpos.y+40);
 		sittingdoughsprite.setPosition(on_desk_pos);// + cc.p(48,48));
 		sittingrollsprite = new cc.Sprite(res.bakery_roll_raw_png);
 		sittingrollsprite.setPosition(on_desk_pos);// + cc.p(48,48));
-		
-		this.addChild(dough);
-		this.addChild(desk);
-		this.addChild(oven);
-		this.addChild(draggeddoughsprite);
-		this.addChild(draggedrollsprite); 
 		this.addChild(sittingdoughsprite);
 		this.addChild(sittingrollsprite); 
+		
 		
 		var touchlistener = cc.EventListener.create({
 			event: cc.EventListener.TOUCH_ONE_BY_ONE,
@@ -109,16 +111,8 @@ var BakeryGameLayer = cc.Layer.extend({
 		cc.eventManager.addListener(touchlistener, this);
 		cc.eventManager.addListener({
 			event: cc.EventListener.MOUSE,
-			convert:function(x,y) {
-				var size = cc.Director().getWinSize();
-				var propX = x / origin.width;
-				var propY = y / origin.height;
-				x = size.width * propX;
-				y = size.height * propY;
-				return cc.p(x,y);
-			},
 			onMouseMove: function(event){
-				mousePos = this.convert(event.getLocationX(),event.getLocationY());
+				mousePos = event.getLocation();//this.convert(event.getLocationX(),event.getLocationY());
 			}
 		},this);
 		
@@ -143,7 +137,7 @@ var BakeryGameLayer = cc.Layer.extend({
 			}
 			else {
 				//drag kneaded roll from desk
-				if (touchstarted && desk.hovered(touchPos)) {
+				if (touchstarted && desk.hovered(touchPos) && !desk.empty) {
 					state = BSTATES.DRAG2;
 					desk.empty = true;
 				}
