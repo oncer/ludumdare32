@@ -345,9 +345,9 @@ var Popup = cc.Sprite.extend({
 		this.sprite.setPosition(pos);
 		this.addChild(this.sprite);
 		this.sprite.runAction(new cc.MoveTo(timetolive, cc.p(pos.x,pos.y+dy)));
-		this.sprite.runAction(new cc.FadeOut(timetolive));
 		this.sprite.setTextureRect(drect);
-		this.sprite.scheduleOnce(this.finished, timetolive);
+		this.sprite.scheduleOnce(function() { this.getParent().removeFromParent(true); }, timetolive);
+		this.sprite.scheduleOnce(function() { this.runAction(new cc.FadeOut(timetolive/2)); }, timetolive/2);
 	},
 	finished:function() {
 		this.removeFromParent(true);
