@@ -69,24 +69,27 @@ var BakeryGameLayer = cc.Layer.extend({
 		}
 		kneadanim =  new cc.RepeatForever(new cc.Animate(new cc.Animation(a, 0.2)));
 		
-		var deskpos = cc.p(80, 20);
-		var ovenpos = cc.p(192, 52);
+		var deskpos = cc.p(100, 20);
+		var ovenpos = cc.p(190, 10);
 		dough = new Dough(cc.p(1*16, 7*16));
 		desk = new Desk(deskpos, cc.p(80, 80));
-		oven = new Oven(ovenpos, cc.p(96, 96));
+		oven = new Oven(ovenpos, cc.p(96, 110));
+		bar = new Bar(cc.p(deskpos.x-16,deskpos.y));
+		bar.setLocalZOrder(1);
 		this.addChild(dough);
 		this.addChild(desk);
 		this.addChild(oven);
+		this.addChild(bar);
 		
 		clawsprite = new cc.Sprite(res.bakery_claw_png);
-		clawsprite.setLocalZOrder(2);
+		clawsprite.setLocalZOrder(3);
 		clawsprite.setAnchorPoint(cc.p(0.55,0.65));
 		this.addChild(clawsprite);
 		
 		draggeddoughsprite = new cc.Sprite(res.bakery_dough_portion_png);
-		draggeddoughsprite.setLocalZOrder(1);
+		draggeddoughsprite.setLocalZOrder(2);
 		draggedrollsprite = new cc.Sprite(res.bakery_roll_raw_png);
-		draggedrollsprite.setLocalZOrder(1);
+		draggedrollsprite.setLocalZOrder(2);
 		this.addChild(draggeddoughsprite);
 		this.addChild(draggedrollsprite); 
 		
@@ -228,6 +231,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		} else {
 			kneaded = 0;
 		}
+		bar.updateVisibility(kneaded / 10);
 		
 		mouseDelta = cc.p(0,0);
 		
@@ -276,6 +280,32 @@ var BakeryGameLayer = cc.Layer.extend({
 	
 });
 
+var Bar = cc.Sprite.extend({
+	size:null,
+	spriteEmpty:null,
+	spriteFull:null,
+	ctor:function(pos) {
+		this._super();
+		
+		
+		this.spriteEmpty = new cc.Sprite(res.bakery_bar_png);
+		this.spriteEmpty.setAnchorPoint(cc.p(0,0));
+		this.spriteEmpty.setPosition(pos);
+		this.spriteFull = new cc.Sprite(res.bakery_bar_png);
+		this.spriteFull.setAnchorPoint(cc.p(0,0));
+		this.spriteFull.setPosition(pos);
+		this.size = this.spriteFull.getContentSize();
+		this.addChild(this.spriteEmpty);
+		this.addChild(this.spriteFull);
+		
+		this.updateVisibility(0);
+	},
+	updateVisibility:function(p) {
+		var prcy = Math.min(1,Math.max(0,p)); ;
+		this.spriteEmpty.setTextureRect(cc.rect(0,this.size.height * (prcy),this.size.width * 0.5,this.size.height * (1-prcy)));
+		this.spriteFull.setTextureRect(cc.rect(this.size.width * 0.5,0,this.size.width * 0.5,this.size.height * prcy));
+	}
+});
 
 var Dough = cc.Sprite.extend({
 	ctor:function(pos) {
@@ -304,7 +334,6 @@ var Desk = cc.Sprite.extend({
 	ctor:function(pos, size) {
 		this._super();
 		cc.associateWithNative( this, cc.Sprite );
-		
 		this.pos = pos;
 		this.size = size;
 		return true;
@@ -327,9 +356,9 @@ var BRoll = cc.Sprite.extend({
 		this._super();
 		cc.associateWithNative( this, cc.Sprite );
 		this.index = i;
-		var px = 190;
-		var py = 52;
-		var dx = 49;
+		var px = 216;
+		var py = 26;
+		var dx = 47;
 		var dy = 48;
 		this.pos = cc.p(px+(i%2)*dx,py+Math.floor(i/2)*dy);
 		this.size = cc.p(48,48);

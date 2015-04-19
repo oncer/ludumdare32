@@ -11,6 +11,7 @@ var res = {
 	bakery_dough_png : "res/bakery_dough.png",
 	bakery_dough_knead_plist : "res/bakery_dough_knead.plist",
 	bakery_dough_portion_png : "res/bakery_dough_portion.png",
+	bakery_bar_png : "res/bakery_bar.png",
 	bakery_claw_png : "res/bakery_claw.png",
 	shop_bg_png : "res/shop_bg.png",
 	shop_roll_png : "res/shop_roll.png",
