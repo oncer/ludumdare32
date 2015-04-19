@@ -55,9 +55,11 @@ var BakeryGameLayer = cc.Layer.extend({
 		touching = false;
 		touchStartPos = cc.p(-1,-1);
 		mousePos = cc.p(-64,-64);
+		mouseDelta = cc.p(0,0);
 		touchstarted = false;
 		countdown = 0;
 		maxcountdown = 2;
+		kneaded = 0;
 		
 		cc.spriteFrameCache.addSpriteFrames(res.bakery_dough_knead_plist);
 		var frames = ["bakery_dough_knead1.png", "bakery_dough_knead2.png"];
@@ -123,7 +125,10 @@ var BakeryGameLayer = cc.Layer.extend({
 		cc.eventManager.addListener({
 			event: cc.EventListener.MOUSE,
 			onMouseMove: function(event){
+				var prevMousePos = mousePos;
 				mousePos = event.getLocation();//this.convert(event.getLocationX(),event.getLocationY());
+				
+				mouseDelta = cc.p(mousePos.x - prevMousePos.x, mousePos.y - prevMousePos.y);
 			}
 		},this);
 		
@@ -157,8 +162,8 @@ var BakeryGameLayer = cc.Layer.extend({
 			//desk hovered & desk == empty -> KNEADING
 			else if (desk.hovered(touchPos) && desk.empty)
 			{
-				state = BSTATES.KNEADING;
-				countdown = maxcountdown;
+				state = BSTATES.IDLE;
+				//countdown = maxcountdown;
 				desk.empty = false;
 				desk.filledwith = 0; //raw dough
 			}
@@ -183,6 +188,8 @@ var BakeryGameLayer = cc.Layer.extend({
 		}
 		
 		//Bear claw positions
+		clawsprite.setPosition(mousePos);
+		/*
 		if (state !== BSTATES.KNEADING) {
 			clawsprite.setPosition(mousePos);
 		} else {
@@ -201,8 +208,31 @@ var BakeryGameLayer = cc.Layer.extend({
 			var py = 36;
 			var sy = 20;
 			clawsprite.setPosition(cc.p(px,py+dy*sy));
+		}*/
+		
+		if (state === BSTATES.IDLE && !desk.empty && desk.filledwith === 0) {
+			if (desk.hovered(mousePos))
+			{
+				var debk1 = kneaded;
+				//increase
+				kneaded += dt * Math.min(10,Math.sqrt(mouseDelta.x*mouseDelta.x + mouseDelta.y*mouseDelta.y));
+				if (Math.floor(debk1) !== Math.floor(kneaded))
+					console.debug("Kneaded: " + Math.floor(kneaded));
+			}
+			
+			if (kneaded >= 10)
+				desk.filledwith = 1;
+			
+			//decrease
+			kneaded = Math.max(kneaded-dt,0);
+		} else {
+			kneaded = 0;
 		}
 		
+		mouseDelta = cc.p(0,0);
+		
+		//if (kneaded > 0) console.debug(kneaded);
+					
 		draggeddoughsprite.setVisible(state === BSTATES.DRAG1);
 		draggedrollsprite.setVisible(state === BSTATES.DRAG2);
 		//ARM.setVisible(state == BSTATES.DRAG1 || state == BSTATES.DRAG2);
@@ -211,8 +241,9 @@ var BakeryGameLayer = cc.Layer.extend({
 		sittingdoughsprite.setVisible(desk.filledwith === 0 && !desk.empty);
 		sittingrollsprite.setVisible(desk.filledwith === 1 && !desk.empty);
 		 
+		
 		//Actions
-		if (state == BSTATES.IDLE) {
+		if (state === BSTATES.IDLE) {
 			//do nothing
 		} else if (state === BSTATES.DRAG1) {
 			//show arm + dough, update positions
