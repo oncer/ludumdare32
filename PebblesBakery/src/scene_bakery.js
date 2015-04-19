@@ -48,9 +48,26 @@ var BSTATES =
 // Gameplay / Main layer
 var BakeryGameLayer = cc.Layer.extend({
 	rollcount:0,
+	rollicon:null,
+	rolltext:null,
+	timeleft:20,
+	timetext:null,
     ctor:function () {
         this._super();
-		//console.debug("TEST");
+		
+		this.rollicon = new cc.Sprite(res.icon_roll_png);
+		this.rollicon.setPosition(cc.p(284,164));
+		this.rollicon.setLocalZOrder(6);
+		this.addChild(this.rollicon);
+		this.rolltext = new cc.LabelTTF("0",  'Times New Roman', 16);
+		this.rolltext.setPosition(cc.p(304,164));
+		this.rolltext.setLocalZOrder(6);
+		this.addChild(this.rolltext);
+		this.timetext = new cc.LabelTTF(""+this.timeleft,  'Times New Roman', 32);
+		this.timetext.setPosition(cc.p(160,160));
+		this.timetext.setLocalZOrder(7);
+		this.addChild(this.timetext);
+		
 		state = BSTATES.IDLE;
 		touching = false;
 		touchStartPos = cc.p(-1,-1);
@@ -62,16 +79,16 @@ var BakeryGameLayer = cc.Layer.extend({
 		kneaded = 0;
 		
 		cc.spriteFrameCache.addSpriteFrames(res.bakery_dough_plist); //_portion03 _dough03
-		doughanim = new cc.RepeatForever(this.makeAnim(["dough0.png", "dough1.png", "dough2.png", "dough3.png"],0.2));
+		doughanim = new cc.RepeatForever(this.makeAnim(["dough0.png", "dough1.png", "dough2.png", "dough3.png"],0.1));
 		kneadanim = new cc.RepeatForever(this.makeAnim(["dough_portion0.png", "dough_portion1.png", "dough_portion2.png", "dough_portion3.png"],0.07));
 		
-		var deskpos = cc.p(100, 20);
-		var ovenpos = cc.p(190, 10);
+		var deskpos = cc.p(114, 34);
+		var ovenpos = cc.p(216, 20);
 		dough = new Dough(cc.p(1*16, 7*16));
 		dough.runAction(doughanim);
-		desk = new Desk(deskpos, cc.p(80, 80));
-		oven = new Oven(ovenpos, cc.p(96, 110));
-		bar = new Bar(cc.p(deskpos.x-16,deskpos.y));
+		desk = new Desk(deskpos, cc.p(50, 50));
+		oven = new Oven(ovenpos, cc.p(96, 105));
+		bar = new Bar(cc.p(deskpos.x-16,deskpos.y-16));
 		bar.setLocalZOrder(1);
 		this.addChild(dough);
 		this.addChild(desk);
@@ -93,7 +110,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		this.addChild(draggedrollsprite); 
 		
 		sittingdoughsprite = new cc.Sprite(res.bakery_dough_portion_png);
-		var on_desk_pos = cc.p(deskpos.x+40,deskpos.y+40);
+		on_desk_pos = cc.p(deskpos.x+24,deskpos.y+24);
 		sittingdoughsprite.setPosition(on_desk_pos);// + cc.p(48,48));
 		sittingdoughsprite.runAction(kneadanim);
 		sittingdoughsprite.pause();
@@ -142,6 +159,25 @@ var BakeryGameLayer = cc.Layer.extend({
 	update:function(dt)
 	{
 		oven.updateRolls(dt);
+		this.timeleft -= dt;
+		this.timetext.setString(Math.ceil(this.timeleft));
+		if(this.timeleft <= 0) {
+			this.timetext.setString("HUEHUEHUE");
+		}
+		
+		/*
+		var sdp = sittingdoughsprite.getPosition();
+		if (sdp.x !== on_desk_pos.x || sdp.y !== on_desk_pos.y) {
+			var dx = (on_desk_pos.x - sdp.x)*dt;
+			var dy = (on_desk_pos.y - sdp.y)*dt;
+			sdp.x = sdp.x + dy;
+			sdp.y = sdp.y + dx;
+			if (dx < 0) sdp.x = Math.floor(sdp.x);
+			else sdp.x = Math.ceil(sdp.x);
+			if (dy < 0) sdp.y = Math.floor(sdp.y);
+			else sdp.y = Math.ceil(sdp.y);
+			sittingdoughsprite.setPosition(sdp);
+		}*/
 		
 		//Transitions
 		if (state === BSTATES.IDLE) {
@@ -153,7 +189,7 @@ var BakeryGameLayer = cc.Layer.extend({
 			}
 			else {
 				//drag kneaded roll from desk
-				if (touchstarted && desk.hovered(touchStartPos) && !desk.empty) {
+				if (touchstarted && desk.hovered(touchStartPos) && !desk.empty && desk.filledwith === 1) {
 					state = BSTATES.DRAG2;
 					desk.empty = true;
 				}
@@ -170,11 +206,7 @@ var BakeryGameLayer = cc.Layer.extend({
 				//countdown = maxcountdown;
 				desk.empty = false;
 				desk.filledwith = 0; //raw dough
-			}
-		} else if (state === BSTATES.KNEADING) {
-			if(countdown <= 0) {
-				state = BSTATES.IDLE;
-				desk.filledwith = 1; //raw roll
+				//sittingdoughsprite.setPosition(draggeddoughsprite.getPosition());
 			}
 		} else if (state === BSTATES.DRAG2) {
 			//(roll) released -> IDLE
@@ -187,7 +219,7 @@ var BakeryGameLayer = cc.Layer.extend({
 			{
 				touching = false;
 				state = BSTATES.IDLE;
-				oven.addRoll();
+				var r = oven.addRoll();
 			}
 		}
 		
@@ -268,11 +300,6 @@ var BakeryGameLayer = cc.Layer.extend({
 		} else if (state === BSTATES.DRAG1) {
 			//show arm + dough, update positions
 			draggeddoughsprite.setPosition(cc.p(touchPos.x+4,touchPos.y+10));
-		} else if (state === BSTATES.KNEADING) {
-			//arm action
-			//[...]
-			//timer
-			countdown -= dt;
 		} else if (state === BSTATES.DRAG2) {
 			//show arm + kneaded roll, update positions
 			draggedrollsprite.setPosition(cc.p(touchPos.x+4,touchPos.y+10));
@@ -286,9 +313,15 @@ var BakeryGameLayer = cc.Layer.extend({
 			{
 				if(touched_roll.state === 2) {
 					++this.rollcount;
-					console.log("Roll Count: " + this.rollcount);
+					//console.log("Roll Count: " + this.rollcount);
+					this.rolltext.setString(this.rollcount);
 				}
 				oven.removeRoll(touched_roll.index);
+				
+				var type = touched_roll.state < 2 ? 0 : touched_roll.state === 2 ? 1 : 2; //0 early, 1 perfect, 2 late
+				var pp = new Popup(cc.p(touched_roll.pos.x+20,touched_roll.pos.y+16),1,16,res.popup_png,cc.rect(80*type,0,80,64));
+				pp.setLocalZOrder(5);
+				this.addChild(pp);
 			}
 		}
 		
@@ -301,6 +334,24 @@ var BakeryGameLayer = cc.Layer.extend({
 		return new cc.Animate(new cc.Animation(a,delay));
 	}
 	
+});
+
+var Popup = cc.Sprite.extend({
+
+	sprite:null,
+	ctor:function(pos,timetolive,dy, res_sprite, drect) {
+		this._super();
+		this.sprite = new cc.Sprite(res_sprite);
+		this.sprite.setPosition(pos);
+		this.addChild(this.sprite);
+		this.sprite.runAction(new cc.MoveTo(timetolive, cc.p(pos.x,pos.y+dy)));
+		this.sprite.runAction(new cc.FadeOut(timetolive));
+		this.sprite.setTextureRect(drect);
+		this.sprite.scheduleOnce(this.finished, timetolive);
+	},
+	finished:function() {
+		this.removeFromParent(true);
+	}
 });
 
 var Bar = cc.Sprite.extend({
@@ -326,10 +377,11 @@ var Bar = cc.Sprite.extend({
 	},
 	updateVisibility:function(p) {
 		var prcy = Math.min(1,Math.max(0,p)); ;
-		this.spriteEmpty.setTextureRect(cc.rect(0,this.size.height*0,this.size.width * 0.5,this.size.height*(1-prcy)));
-		this.spriteEmpty.setPosition(this.pos.x,this.pos.y +this.size.height*(prcy));
+		//prcy = Math.floor(prcy*10)/10;
+		this.spriteEmpty.setTextureRect(cc.rect(0,this.size.height*0,Math.ceil(this.size.width * 0.5),Math.ceil(this.size.height*(1-prcy))));
+		this.spriteEmpty.setPosition(this.pos.x,this.pos.y +Math.floor(this.size.height*(prcy)));
 		
-		this.spriteFull.setTextureRect(cc.rect(this.size.width * 0.5,this.size.height * (1-prcy),this.size.width * 0.5,this.size.height * (prcy)));
+		this.spriteFull.setTextureRect(cc.rect(this.size.width * 0.5,Math.floor(this.size.height * (1-prcy)),Math.ceil(this.size.width * 0.5),Math.ceil(this.size.height * (prcy))));
 		
 	}
 });
@@ -363,6 +415,11 @@ var Desk = cc.Sprite.extend({
 		cc.associateWithNative( this, cc.Sprite );
 		this.pos = pos;
 		this.size = size;
+		this.drawNode = cc.DrawNode.create();
+		//this.addChild(this.drawNode,100);
+		this.drawNode.clear();
+		this.drawNode.drawRect(pos, cc.p(pos.x+size.x,pos.y+size.y),
+                           cc.color(255,255,255,128), 1 , cc.color(255,255,255,128) );
 		return true;
 	},
 	hovered:function(pos)
@@ -396,7 +453,7 @@ var BRoll = cc.Sprite.extend({
 		this.addChild(this.sprite);
 		this.state = 0;
 		this.updateVisibility(this.state);
-		this.dt = [this.random_range(2,4),this.random_range(2,4),this.random_range(1,2),1,1];
+		this.dt = [this.random_range(2,4),this.random_range(2,4),this.random_range(1,2),0.8,0.8];
 		console.debug("Ranges: [" + this.dt[0] + ", " + this.dt[1] + ", " + this.dt[2] + ", " + this.dt[3] + "]");
 	},
 	random_range:function(a,b) {
@@ -437,6 +494,13 @@ var Oven = cc.Sprite.extend({
 		
 		this.pos = pos;
 		this.size = size;
+		
+		this.drawNode = cc.DrawNode.create();
+		//this.addChild(this.drawNode,100);
+		this.drawNode.clear();
+		this.drawNode.drawRect(pos, cc.p(pos.x+size.x,pos.y+size.y),
+                           cc.color(255,255,255,128), 1 , cc.color(255,255,255,128) );
+						   
 		return true;
 	},
 	nextEmpty:function() {
@@ -453,6 +517,7 @@ var Oven = cc.Sprite.extend({
 		var i = this.nextEmpty();
 		this.rolls[i] = new BRoll(i);
 		this.addChild(this.rolls[i]);
+		return this.rolls[i];
 	},
 	updateRolls:function(dt) {
 		for (var i = 0; i < this.rolls.length; ++i) {
