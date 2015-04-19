@@ -9,7 +9,8 @@ var res = {
 	bakery_dough_png : "res/bakery_dough.png",
 	bakery_dough_knead1_png : "res/bakery_dough_knead1.png",
 	bakery_dough_knead2_png : "res/bakery_dough_knead2.png",
-	bakery_dough_portion_png : "res/bakery_dough_portion.png"
+	bakery_dough_portion_png : "res/bakery_dough_portion.png",
+	bakery_claw_png : "res/bakery_claw.png"
 };
 
 var g_resources = [];

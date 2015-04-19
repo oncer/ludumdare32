@@ -48,24 +48,12 @@ var BSTATES =
 // Gameplay / Main layer
 var BakeryGameLayer = cc.Layer.extend({
 	rollcount:0,
-    sprite:null,
-	state:BSTATES.IDLE,
-	draggeddoughsprite:null,
-	draggedrollsprite:null,
-	sittingdoughsprite:null,
-	sittingrollsprite:null,
-	touchPos:null,
-	touching:false,
-	dough:null,
-	desk:null,
-	oven:null,
-	countdown:0,
-	maxcountdown:3,
     ctor:function () {
         this._super();
 		//console.debug("TEST");
 		state = BSTATES.IDLE;
 		touching = false;
+		mousePos = cc.p(-64,-64);
 		touchstarted = false;
 		countdown = 0;
 		maxcountdown = 3;
@@ -75,6 +63,9 @@ var BakeryGameLayer = cc.Layer.extend({
 		dough = new Dough(cc.p(1*16, 7*16));
 		desk = new Desk(deskpos, cc.p(80, 80));
 		oven = new Oven(ovenpos, cc.p(96, 96));
+		
+		clawsprite = new cc.Sprite(res.bakery_claw_png);
+		clawsprite.setLocalZOrder(2);
 		
 		draggeddoughsprite = new cc.Sprite(res.bakery_dough_portion_png);
 		draggeddoughsprite.setLocalZOrder(1);
@@ -116,6 +107,20 @@ var BakeryGameLayer = cc.Layer.extend({
 			}
 		});
 		cc.eventManager.addListener(touchlistener, this);
+		cc.eventManager.addListener({
+			event: cc.EventListener.MOUSE,
+			convert:function(x,y) {
+				var size = cc.Director().getWinSize();
+				var propX = x / origin.width;
+				var propY = y / origin.height;
+				x = size.width * propX;
+				y = size.height * propY;
+				return cc.p(x,y);
+			},
+			onMouseMove: function(event){
+				mousePos = this.convert(event.getLocationX(),event.getLocationY());
+			}
+		},this);
 		
 		
         return true;
@@ -124,7 +129,10 @@ var BakeryGameLayer = cc.Layer.extend({
 	{
 		oven.updateRolls(dt);
 		
-			//console.debug(state);
+		
+		clawsprite.setPosition(mousePos);
+		
+		
 		//Transitions
 		if (state === BSTATES.IDLE) {
 		
@@ -173,13 +181,14 @@ var BakeryGameLayer = cc.Layer.extend({
 			}
 		}
 		
-		 draggeddoughsprite.setVisible(state === BSTATES.DRAG1);
-		 draggedrollsprite.setVisible(state === BSTATES.DRAG2);
-		 //ARM.setVisible(state == BSTATES.DRAG1 || state == BSTATES.DRAG2);
+		
+		draggeddoughsprite.setVisible(state === BSTATES.DRAG1);
+		draggedrollsprite.setVisible(state === BSTATES.DRAG2);
+		//ARM.setVisible(state == BSTATES.DRAG1 || state == BSTATES.DRAG2);
 		 
 		 
-		 sittingdoughsprite.setVisible(desk.filledwith === 0 && !desk.empty);
-		 sittingrollsprite.setVisible(desk.filledwith === 1 && !desk.empty);
+		sittingdoughsprite.setVisible(desk.filledwith === 0 && !desk.empty);
+		sittingrollsprite.setVisible(desk.filledwith === 1 && !desk.empty);
 		 
 		//Actions
 		if (state == BSTATES.IDLE) {
