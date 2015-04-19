@@ -7,12 +7,13 @@ var res = {
 	bakery_roll_done_png : "res/bakery_roll_done.png",
 	bakery_roll_burnt_png : "res/bakery_roll_burnt.png",
 	bakery_roll_dough_png : "res/bakery_roll_dough.png",
-	bakery_dough_portion_png : "res/bakery_dough_portion.png",
 	bakery_dough_png : "res/bakery_dough.png",
+	bakery_dough_portion_png : "res/bakery_dough_portion.png",
 	bakery_dough_knead1_png : "res/bakery_dough_knead1.png",
 	bakery_dough_knead2_png : "res/bakery_dough_knead2.png",
-	bakery_dough_portion_png : "res/bakery_dough_portion.png",
-	bakery_claw_png : "res/bakery_claw.png"
+
+	bakery_claw_png : "res/bakery_claw.png",
+
 	shop_bg_png : "res/shop_bg.png",
 	shop_roll_png : "res/shop_roll.png",
 	bear_png : "res/bear.png",
