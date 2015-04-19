@@ -47,6 +47,7 @@ var BSTATES =
 
 // Gameplay / Main layer
 var BakeryGameLayer = cc.Layer.extend({
+	rollcount:0,
     sprite:null,
 	state:BSTATES.IDLE,
 	draggeddoughsprite:null,
@@ -55,6 +56,7 @@ var BakeryGameLayer = cc.Layer.extend({
 	sittingrollsprite:null,
 	touchPos:null,
 	touching:false,
+	touchmoved:false,
 	dough:null,
 	desk:null,
 	oven:null,
@@ -65,6 +67,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		//console.debug("TEST");
 		state = BSTATES.IDLE;
 		touching = false;
+		touchmoved = false;
 		countdown = 0;
 		maxcountdown = 3;
 		
@@ -72,9 +75,11 @@ var BakeryGameLayer = cc.Layer.extend({
 		desk = new Desk(cc.p(5*16, 1*16));
 		oven = new Oven(cc.p(12*16, 3*16));
 		draggeddoughsprite = new cc.Sprite(res.bakery_dough_portion_png);
+		draggeddoughsprite.setLocalZOrder(1);
 		draggedrollsprite = new cc.Sprite(res.bakery_roll_raw_png);
+		draggedrollsprite.setLocalZOrder(1);
 		sittingdoughsprite = new cc.Sprite(res.bakery_dough_portion_png);
-		var on_desk_pos = cc.p(desk.x+32,desk.y+32);
+		var on_desk_pos = cc.p(desk.x+40,desk.y+40);
 		sittingdoughsprite.setPosition(on_desk_pos);// + cc.p(48,48));
 		sittingrollsprite = new cc.Sprite(res.bakery_roll_raw_png);
 		sittingrollsprite.setPosition(on_desk_pos);// + cc.p(48,48));
@@ -92,11 +97,12 @@ var BakeryGameLayer = cc.Layer.extend({
 			onTouchBegan: function (touch, event) { 
 				touchPos = touch.getLocation();
 				touching = true;
+				touchmoved = false;
 				return true;
 			},
 			onTouchMoved: function (touch, event) { 
 				touchPos = touch.getLocation();
-				touching = true;
+				touchmoved = true;
 			},
 			onTouchEnded: function (touch, event) {         
 				touchPos = null;
@@ -110,17 +116,18 @@ var BakeryGameLayer = cc.Layer.extend({
     },
 	update:function(dt)
 	{
+		oven.updateRolls(dt);
 		
 			//console.debug(state);
 		//Transitions
 		if (state === BSTATES.IDLE) {
 		
-			if (desk.empty){
-				//drag from dough
-				if (touching && dough.hovered(touchPos)) {
-					state = BSTATES.DRAG1;
-				}
-			} else {
+			
+			//drag from dough
+			if (touching && dough.hovered(touchPos)) {
+				state = BSTATES.DRAG1;
+			}
+			else {
 				//drag kneaded roll from desk
 				if (touching && desk.hovered(touchPos)) {
 					state = BSTATES.DRAG2;
@@ -135,6 +142,7 @@ var BakeryGameLayer = cc.Layer.extend({
 			//desk hovered & desk == empty -> KNEADING
 			else if (desk.hovered(touchPos) && desk.empty)
 			{
+				touching = false;
 				state = BSTATES.KNEADING;
 				countdown = maxcountdown;
 				desk.empty = false;
@@ -154,8 +162,8 @@ var BakeryGameLayer = cc.Layer.extend({
 			//oven hovered & oven != full -> IDLE + desk := empty
 			else if (oven.hovered(touchPos) && !oven.isFull())
 			{
+				touching = false;
 				state = BSTATES.IDLE;
-				//TODO add roll to oven
 				oven.addRoll();
 			}
 		}
@@ -180,13 +188,27 @@ var BakeryGameLayer = cc.Layer.extend({
 			//timer
 			countdown -= dt;
 		} else if (state === BSTATES.DRAG2) {
-			//show arm + kneaded roll
+			//show arm + kneaded roll, update positions
 			draggedrollsprite.setPosition(touchPos);
+		}
+		
+		//take roll out of oven
+		if (touching && !touchmoved && state == BSTATES.IDLE)
+		{
+			var touched_roll = oven.touch(touchPos);
+			if (touched_roll != null)
+			{
+				if(touched_roll.state === 1) {
+					++this.rollcount;
+					console.log("Roll Count: " + this.rollcount);
+				}
+				oven.removeRoll(touched_roll.index);
+			}
 		}
 		
 	}
 	
-});
+});  //TODO ROLLSOR AT LEAST THEIR IMAGES ARE NOT REMOVED WHEN TOUCHED IN OVEN
 
 
 var Dough = cc.Sprite.extend({
@@ -230,36 +252,102 @@ var Desk = cc.Sprite.extend({
 	}
 });
 
+var Roll = cc.Sprite.extend({
+	state:0,
+	index:0,
+	timealive:0,
+	sprite:[null,null,null],
+	ctor:function(i) {
+		this._super();
+		cc.associateWithNative( this, cc.Sprite );
+		this.index = i;
+		var px = 0;
+		var py = 0;
+		var dx = 48;
+		var dy = dx;
+		this.sprite[0] = new cc.Sprite(res.bakery_roll_raw_png);
+		this.sprite[1] = new cc.Sprite(res.bakery_roll_done_png);
+		this.sprite[2] = new cc.Sprite(res.bakery_roll_burnt_png);
+		for (var k = 0; k < this.sprite.length; ++k) {
+			this.sprite[k].setPosition(cc.p(px+(i%2)*dx,py+Math.floor(i/2)*dy));
+			this.sprite[k].setAnchorPoint(cc.p(0,0));
+			this.sprite[k].setVisible(k === 0);
+			this.addChild(this.sprite[k]);
+		}
+		this.state = 0;
+	},
+	update:function(dt) { //burn baby burn
+		this.timealive += dt;
+		var statechanged = false;
+		if (this.timealive > 2 && this.state === 0) {
+			this.state = 1;
+			statechanged = true;
+		} else if (this.timealive > 4 && this.state === 1) {
+			this.state = 2;
+			statechanged = true;
+		}
+			
+		if (statechanged)
+			for (var k = 0; k < this.sprite.length; ++k) {
+				this.sprite[k].setVisible(k === this.state);
+			}
+	},
+	hovered:function(pos)
+	{
+		var locationInNode = this.getParent().convertToNodeSpace(pos);    
+		var s = this.sprite[this.state].getContentSize();
+		var rect = cc.rect(0, 0, s.width, s.height);
+		
+		return (cc.rectContainsPoint(rect, locationInNode));   
+	}
+
+});
+
 
 var Oven = cc.Sprite.extend({
 	empty:[true,true,true,true],
-	rolls:[null,null,null,null], //TODO create roll class -> each with X sprites for %baked + listener for touch-finish
+	rolls:[null,null,null,null],
 	ctor:function(pos) {
 		this._super(res.bakery_oven_png);
 		cc.associateWithNative( this, cc.Sprite );
-		
 		this.setAnchorPoint(cc.p(0,0));
 		this.setPosition(pos);
 		return true;
 	},
 	nextEmpty:function() {
-		if (this.empty[0])
-			return 0;
-		else if (this.empty[1])
-			return 1;
-		else if (this.empty[2])
-			return 2;
-		else if (this.empty[3])
-			return 3;
-		else
-			return -1;
+		for (var i = 0; i < this.rolls.length; ++i) {
+			if (this.rolls[i] === null)
+				return i;
+		}
+		return -1;
 	},
 	isFull:function() {
 		return this.nextEmpty() == -1;
 	},
 	addRoll:function() {
 		var i = this.nextEmpty();
-		
+		this.rolls[i] = new Roll(i);
+		this.addChild(this.rolls[i]);
+	},
+	updateRolls:function(dt) {
+		for (var i = 0; i < this.rolls.length; ++i) {
+			if(this.rolls[i] != null)
+				this.rolls[i].update(dt);
+		}
+	},
+	removeRoll:function(i) {
+		this.rolls[i] = new Roll(i);
+		this.rolls[i].removeAllChildrenWithCleanup();
+		this.removeChild(this.rolls[i], true);
+		this.rolls[i] = null;
+	},
+	touch:function(pos){
+		for (var i = 0; i < this.rolls.length; ++i) {
+			if(this.rolls[i] != null)
+				if(this.rolls[i].hovered(pos))
+					return this.rolls[i];
+		}
+		return null;
 	},
 	hovered:function(pos)
 	{
