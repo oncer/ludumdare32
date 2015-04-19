@@ -61,17 +61,14 @@ var BakeryGameLayer = cc.Layer.extend({
 		maxcountdown = 2;
 		kneaded = 0;
 		
-		cc.spriteFrameCache.addSpriteFrames(res.bakery_dough_knead_plist);
-		var frames = ["bakery_dough_knead1.png", "bakery_dough_knead2.png"];
-		a = [];
-		for (var i in frames) {
-			a.push(cc.spriteFrameCache.getSpriteFrame(frames[i]));
-		}
-		kneadanim =  new cc.RepeatForever(new cc.Animate(new cc.Animation(a, 0.2)));
+		cc.spriteFrameCache.addSpriteFrames(res.bakery_dough_plist); //_portion03 _dough03
+		doughanim = new cc.RepeatForever(this.makeAnim(["dough0.png", "dough1.png", "dough2.png", "dough3.png"],0.2));
+		kneadanim = new cc.RepeatForever(this.makeAnim(["dough_portion0.png", "dough_portion1.png", "dough_portion2.png", "dough_portion3.png"],0.07));
 		
 		var deskpos = cc.p(100, 20);
 		var ovenpos = cc.p(190, 10);
 		dough = new Dough(cc.p(1*16, 7*16));
+		dough.runAction(doughanim);
 		desk = new Desk(deskpos, cc.p(80, 80));
 		oven = new Oven(ovenpos, cc.p(96, 110));
 		bar = new Bar(cc.p(deskpos.x-16,deskpos.y));
@@ -99,6 +96,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		var on_desk_pos = cc.p(deskpos.x+40,deskpos.y+40);
 		sittingdoughsprite.setPosition(on_desk_pos);// + cc.p(48,48));
 		sittingdoughsprite.runAction(kneadanim);
+		sittingdoughsprite.pause();
 		sittingrollsprite = new cc.Sprite(res.bakery_roll_png);
 		sittingrollsprite.setPosition(on_desk_pos);// + cc.p(48,48));
 		sittingrollsprite.setTextureRect(cc.rect(0,0,48,48));
@@ -217,23 +215,37 @@ var BakeryGameLayer = cc.Layer.extend({
 		}*/
 		
 		var neededkneaded = 5;
-		if (state === BSTATES.IDLE && !desk.empty && desk.filledwith === 0) {
+		if (state === BSTATES.IDLE && !desk.empty && desk.filledwith === 0) { //full unkneaded desk while idle
 			if (desk.hovered(mousePos))
 			{
+				var movement = Math.min(10,Math.sqrt(mouseDelta.x*mouseDelta.x + mouseDelta.y*mouseDelta.y))
 				//increase
-				kneaded += dt * Math.min(10,Math.sqrt(mouseDelta.x*mouseDelta.x + mouseDelta.y*mouseDelta.y));
+				kneaded += dt * movement;
+				
+				if (movement > 1)
+					sittingdoughsprite.resume();
+				else
+					sittingdoughsprite.pause();
+					
 			}
-			else  //decrease even more
-			kneaded = Math.max(kneaded-dt*3,0);
+			else { //decrease even more
+				kneaded = Math.max(kneaded-dt*3,0);
+			
+				sittingdoughsprite.pause();
+			}
 			
 			if (kneaded >= neededkneaded)
+			{
+				console.debug("DONE KNEADING");
 				desk.filledwith = 1;
+				kneaded = 0;
+				sittingdoughsprite.pause();
+			}
 			
 			//decrease
 			kneaded = Math.max(kneaded-dt,0);
-		} else {
-			kneaded = 0;
 		}
+		
 		bar.updateVisibility(kneaded / neededkneaded);
 		
 		mouseDelta = cc.p(0,0);
@@ -280,6 +292,13 @@ var BakeryGameLayer = cc.Layer.extend({
 			}
 		}
 		
+	},
+	makeAnim:function(frames,delay) {
+		a = [];
+		for (var i in frames) {
+			a.push(cc.spriteFrameCache.getSpriteFrame(frames[i]));
+		}
+		return new cc.Animate(new cc.Animation(a,delay));
 	}
 	
 });
@@ -377,14 +396,14 @@ var BRoll = cc.Sprite.extend({
 		this.addChild(this.sprite);
 		this.state = 0;
 		this.updateVisibility(this.state);
-		this.dt = [this.random_range(2,4),this.random_range(2,4),this.random_range(1,2),this.random_range(1,1.5)];
+		this.dt = [this.random_range(2,4),this.random_range(2,4),this.random_range(1,2),1,1];
 		console.debug("Ranges: [" + this.dt[0] + ", " + this.dt[1] + ", " + this.dt[2] + ", " + this.dt[3] + "]");
 	},
 	random_range:function(a,b) {
 		return Math.random() * (b-a) + a; 
 	},
 	update:function(dt) { //burn baby burn
-		if (state < 4) {
+		if (state < 5) {
 			this.timealive += dt;
 			var statechanged = false;
 			if (this.timealive >= this.dt[this.state]) { //0.5-1sec and state 0 -> state 1
