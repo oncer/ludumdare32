@@ -50,7 +50,7 @@ var BakeryGameLayer = cc.Layer.extend({
 	rollcount:0,
 	rollicon:null,
 	rolltext:null,
-	timeleft:20,
+	timeleft:30,
 	timetext:null,
     ctor:function () {
         this._super();
@@ -77,6 +77,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		countdown = 0;
 		maxcountdown = 2;
 		kneaded = 0;
+		tol = 8,
 		
 		cc.spriteFrameCache.addSpriteFrames(res.bakery_dough_plist); //_portion03 _dough03
 		doughanim = new cc.RepeatForever(this.makeAnim(["dough0.png", "dough1.png", "dough2.png", "dough3.png"],0.1));
@@ -162,10 +163,15 @@ var BakeryGameLayer = cc.Layer.extend({
 		this.timeleft -= dt;
 		this.timetext.setString(Math.ceil(this.timeleft));
 		if(this.timeleft <= 0) {
+		
 			this.timetext.setString("HUEHUEHUE");
+			//TODO SIMON 
+			//- store this.rollcount
+			//- open store scene
+			
 		}
 		
-		/*
+		/* //INTPOL SCHMARN
 		var sdp = sittingdoughsprite.getPosition();
 		if (sdp.x !== on_desk_pos.x || sdp.y !== on_desk_pos.y) {
 			var dx = (on_desk_pos.x - sdp.x)*dt;
@@ -183,13 +189,13 @@ var BakeryGameLayer = cc.Layer.extend({
 		if (state === BSTATES.IDLE) {
 			
 			//drag from dough
-			if (touchstarted && dough.hovered(touchStartPos)) {
+			if (touchstarted && dough.hovered(touchStartPos,tol)) {
 				state = BSTATES.DRAG1;
 				
 			}
 			else {
 				//drag kneaded roll from desk
-				if (touchstarted && desk.hovered(touchStartPos) && !desk.empty && desk.filledwith === 1) {
+				if (touchstarted && desk.hovered(touchStartPos,tol) && !desk.empty && desk.filledwith === 1) {
 					state = BSTATES.DRAG2;
 					desk.empty = true;
 				}
@@ -200,7 +206,7 @@ var BakeryGameLayer = cc.Layer.extend({
 			if (!touching)
 				state = BSTATES.IDLE;
 			//desk hovered & desk == empty -> KNEADING
-			else if (desk.hovered(touchPos) && desk.empty)
+			else if (desk.hovered(touchPos,tol) && desk.empty)
 			{
 				state = BSTATES.IDLE;
 				//countdown = maxcountdown;
@@ -215,7 +221,7 @@ var BakeryGameLayer = cc.Layer.extend({
 				desk.empty = false;
 			}
 			//oven hovered & oven != full -> IDLE + desk := empty
-			else if (oven.hovered(touchPos) && !oven.isFull())
+			else if (oven.hovered(touchPos,0) && !oven.isFull())
 			{
 				touching = false;
 				state = BSTATES.IDLE;
@@ -248,7 +254,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		
 		var neededkneaded = 5;
 		if (state === BSTATES.IDLE && !desk.empty && desk.filledwith === 0) { //full unkneaded desk while idle
-			if (desk.hovered(mousePos))
+			if (desk.hovered(mousePos,tol))
 			{
 				var movement = Math.min(10,Math.sqrt(mouseDelta.x*mouseDelta.x + mouseDelta.y*mouseDelta.y))
 				//increase
@@ -394,11 +400,11 @@ var Dough = cc.Sprite.extend({
 		this.setPosition(pos);
 		return true;
 	},
-	hovered:function(pos)
+	hovered:function(pos,tolerance)
 	{
 		var locationInNode = this.convertToNodeSpace(pos);    
 		var s = this.getContentSize();
-		var rect = cc.rect(0, 0, s.width, s.height);
+		var rect = cc.rect(0-tolerance, 0-tolerance, s.width+2*tolerance, s.height+2*tolerance);
 		
 		return (cc.rectContainsPoint(rect, locationInNode));   
 	}
@@ -422,9 +428,9 @@ var Desk = cc.Sprite.extend({
                            cc.color(255,255,255,128), 1 , cc.color(255,255,255,128) );
 		return true;
 	},
-	hovered:function(pos)
+	hovered:function(pos,tolerance)
 	{
-		var rect = cc.rect(this.pos.x,this.pos.y,this.size.x,this.size.y);
+		var rect = cc.rect(this.pos.x-tolerance,this.pos.y-tolerance,this.size.x+2*tolerance,this.size.y+2*tolerance);
 		return (cc.rectContainsPoint(rect, pos));  
 	}
 });
@@ -453,7 +459,7 @@ var BRoll = cc.Sprite.extend({
 		this.addChild(this.sprite);
 		this.state = 0;
 		this.updateVisibility(this.state);
-		this.dt = [this.random_range(2,4),this.random_range(2,4),this.random_range(1,2),0.8,0.8];
+		this.dt = [5,5,1.5,0.8,0.8];//this.random_range(4,6),this.random_range(4,6),this.random_range(1,2),0.8,0.8]; //DELAYS BETWEEN BURN STATES
 		console.debug("Ranges: [" + this.dt[0] + ", " + this.dt[1] + ", " + this.dt[2] + ", " + this.dt[3] + "]");
 	},
 	random_range:function(a,b) {
@@ -476,8 +482,8 @@ var BRoll = cc.Sprite.extend({
 	updateVisibility:function(frame) {
 		this.sprite.setTextureRect(cc.rect(this.s.x*this.state,0,this.s.x,this.s.y));
 	},
-	hovered:function(pos) {
-		var rect = cc.rect(this.pos.x,this.pos.y,this.s.x,this.s.y);
+	hovered:function(pos,tolerance) {
+		var rect = cc.rect(this.pos.x-tolerance,this.pos.y-tolerance,this.s.x+2*tolerance,this.s.y+2*tolerance);
 		return (cc.rectContainsPoint(rect, pos));  
 	}
 
@@ -532,14 +538,13 @@ var Oven = cc.Sprite.extend({
 	touch:function(pos){
 		for (var i = 0; i < this.rolls.length; ++i) {
 			if(this.rolls[i] != null)
-				if(this.rolls[i].hovered(pos))
+				if(this.rolls[i].hovered(pos,4))
 					return this.rolls[i];
 		}
 		return null;
 	},
-	hovered:function(pos)
-	{
-		var rect = cc.rect(this.pos.x,this.pos.y,this.size.x,this.size.y);
+	hovered:function(pos,tolerance) {
+		var rect = cc.rect(this.pos.x-tolerance,this.pos.y-tolerance,this.size.x+2*tolerance,this.size.y+2*tolerance);
 		return (cc.rectContainsPoint(rect, pos));  
 	}
 });
