@@ -7,145 +7,145 @@
             <key>bear_hit0.png</key>
             <dict>
                 <key>frame</key>
-                <string>{{2,2},{64,48}}</string>
+                <string>{{2,2},{64,64}}</string>
                 <key>offset</key>
                 <string>{0,0}</string>
                 <key>rotated</key>
                 <false/>
                 <key>sourceColorRect</key>
-                <string>{{0,0},{64,48}}</string>
+                <string>{{0,0},{64,64}}</string>
                 <key>sourceSize</key>
-                <string>{64,48}</string>
+                <string>{64,64}</string>
             </dict>
             <key>bear_hit1.png</key>
             <dict>
                 <key>frame</key>
-                <string>{{68,2},{64,48}}</string>
+                <string>{{68,2},{64,64}}</string>
                 <key>offset</key>
                 <string>{0,0}</string>
                 <key>rotated</key>
                 <false/>
                 <key>sourceColorRect</key>
-                <string>{{0,0},{64,48}}</string>
+                <string>{{0,0},{64,64}}</string>
                 <key>sourceSize</key>
-                <string>{64,48}</string>
+                <string>{64,64}</string>
             </dict>
             <key>bear_hit2.png</key>
             <dict>
                 <key>frame</key>
-                <string>{{134,2},{64,48}}</string>
+                <string>{{134,2},{64,64}}</string>
                 <key>offset</key>
                 <string>{0,0}</string>
                 <key>rotated</key>
                 <false/>
                 <key>sourceColorRect</key>
-                <string>{{0,0},{64,48}}</string>
+                <string>{{0,0},{64,64}}</string>
                 <key>sourceSize</key>
-                <string>{64,48}</string>
+                <string>{64,64}</string>
             </dict>
             <key>bear_hurt0.png</key>
             <dict>
                 <key>frame</key>
-                <string>{{200,2},{64,48}}</string>
+                <string>{{200,2},{64,64}}</string>
                 <key>offset</key>
                 <string>{0,0}</string>
                 <key>rotated</key>
                 <false/>
                 <key>sourceColorRect</key>
-                <string>{{0,0},{64,48}}</string>
+                <string>{{0,0},{64,64}}</string>
                 <key>sourceSize</key>
-                <string>{64,48}</string>
+                <string>{64,64}</string>
             </dict>
             <key>bear_hurt1.png</key>
             <dict>
                 <key>frame</key>
-                <string>{{266,2},{64,48}}</string>
+                <string>{{266,2},{64,64}}</string>
                 <key>offset</key>
                 <string>{0,0}</string>
                 <key>rotated</key>
                 <false/>
                 <key>sourceColorRect</key>
-                <string>{{0,0},{64,48}}</string>
+                <string>{{0,0},{64,64}}</string>
                 <key>sourceSize</key>
-                <string>{64,48}</string>
+                <string>{64,64}</string>
             </dict>
             <key>bear_hurt2.png</key>
             <dict>
                 <key>frame</key>
-                <string>{{332,2},{64,48}}</string>
+                <string>{{332,2},{64,64}}</string>
                 <key>offset</key>
                 <string>{0,0}</string>
                 <key>rotated</key>
                 <false/>
                 <key>sourceColorRect</key>
-                <string>{{0,0},{64,48}}</string>
+                <string>{{0,0},{64,64}}</string>
                 <key>sourceSize</key>
-                <string>{64,48}</string>
+                <string>{64,64}</string>
             </dict>
             <key>bear_hurt3.png</key>
             <dict>
                 <key>frame</key>
-                <string>{{266,2},{64,48}}</string>
+                <string>{{266,2},{64,64}}</string>
                 <key>offset</key>
                 <string>{0,0}</string>
                 <key>rotated</key>
                 <false/>
                 <key>sourceColorRect</key>
-                <string>{{0,0},{64,48}}</string>
+                <string>{{0,0},{64,64}}</string>
                 <key>sourceSize</key>
-                <string>{64,48}</string>
+                <string>{64,64}</string>
             </dict>
             <key>bear_idle0.png</key>
             <dict>
                 <key>frame</key>
-                <string>{{398,2},{64,48}}</string>
+                <string>{{398,2},{64,64}}</string>
                 <key>offset</key>
                 <string>{0,0}</string>
                 <key>rotated</key>
                 <false/>
                 <key>sourceColorRect</key>
-                <string>{{0,0},{64,48}}</string>
+                <string>{{0,0},{64,64}}</string>
                 <key>sourceSize</key>
-                <string>{64,48}</string>
+                <string>{64,64}</string>
             </dict>
             <key>bear_idle1.png</key>
             <dict>
                 <key>frame</key>
-                <string>{{464,2},{64,48}}</string>
+                <string>{{464,2},{64,64}}</string>
                 <key>offset</key>
                 <string>{0,0}</string>
                 <key>rotated</key>
                 <false/>
                 <key>sourceColorRect</key>
-                <string>{{0,0},{64,48}}</string>
+                <string>{{0,0},{64,64}}</string>
                 <key>sourceSize</key>
-                <string>{64,48}</string>
+                <string>{64,64}</string>
             </dict>
             <key>bear_idle2.png</key>
             <dict>
                 <key>frame</key>
-                <string>{{530,2},{64,48}}</string>
+                <string>{{530,2},{64,64}}</string>
                 <key>offset</key>
                 <string>{0,0}</string>
                 <key>rotated</key>
                 <false/>
                 <key>sourceColorRect</key>
-                <string>{{0,0},{64,48}}</string>
+                <string>{{0,0},{64,64}}</string>
                 <key>sourceSize</key>
-                <string>{64,48}</string>
+                <string>{64,64}</string>
             </dict>
             <key>bear_idle3.png</key>
             <dict>
                 <key>frame</key>
-                <string>{{596,2},{64,48}}</string>
+                <string>{{596,2},{64,64}}</string>
                 <key>offset</key>
                 <string>{0,0}</string>
                 <key>rotated</key>
                 <false/>
                 <key>sourceColorRect</key>
-                <string>{{0,0},{64,48}}</string>
+                <string>{{0,0},{64,64}}</string>
                 <key>sourceSize</key>
-                <string>{64,48}</string>
+                <string>{64,64}</string>
             </dict>
         </dict>
         <key>metadata</key>
@@ -155,9 +155,9 @@
             <key>realTextureFileName</key>
             <string>bear.png</string>
             <key>size</key>
-            <string>{662,52}</string>
+            <string>{662,68}</string>
             <key>smartupdate</key>
-            <string>$TexturePacker:SmartUpdate:e8ffd6d383bf163131a2dde17eac84d4:8692614b302a398e37103f00d91e858e:2904f34ed51771f70a05a1fbadbb6a19$</string>
+            <string>$TexturePacker:SmartUpdate:891a7da8aa372c7960ff063ebaf3b80c:ce6d711637245b083199596d1a01fe45:2904f34ed51771f70a05a1fbadbb6a19$</string>
             <key>textureFileName</key>
             <string>bear.png</string>
         </dict>

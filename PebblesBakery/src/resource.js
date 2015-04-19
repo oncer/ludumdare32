@@ -16,19 +16,6 @@ var res = {
 	bear_plist : "res/bear.plist",
 	enemy0_png : "res/enemy0.png",
 	enemy0_plist : "res/enemy0.plist"
-		/*
-	bear_idle0_png : "res/bear_idle0.png",
-	bear_idle1_png : "res/bear_idle1.png",
-	bear_idle2_png : "res/bear_idle2.png",
-	bear_idle3_png : "res/bear_idle3.png",
-	bear_hit0_png : "res/bear_hit0.png",
-	bear_hit1_png : "res/bear_hit1.png",
-	bear_hit2_png : "res/bear_hit2.png",
-	bear_hurt0_png : "res/bear_hurt0.png",
-	bear_hurt1_png : "res/bear_hurt1.png",
-	bear_hurt2_png : "res/bear_hurt2.png",
-	bear_hurt3_png : "res/bear_hurt3.png",
-	*/
 };
 
 var g_resources = [];
