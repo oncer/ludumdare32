@@ -9,16 +9,15 @@ var res = {
 	bakery_roll_dough_png : "res/bakery_roll_dough.png",
 	bakery_dough_portion_png : "res/bakery_dough_portion.png",
 	bakery_dough_png : "res/bakery_dough.png",
-	bakery_dough_knead1_png : "res/bakery_dough_knead1.png",
-	bakery_dough_knead2_png : "res/bakery_dough_knead2.png",
+	bakery_dough_knead_plist : "res/bakery_dough_knead.plist",
 	bakery_dough_portion_png : "res/bakery_dough_portion.png",
-	bakery_claw_png : "res/bakery_claw.png"
+	bakery_claw_png : "res/bakery_claw.png",
 	shop_bg_png : "res/shop_bg.png",
 	shop_roll_png : "res/shop_roll.png",
 	bear_png : "res/bear.png",
 	bear_plist : "res/bear.plist",
 	enemy0_png : "res/enemy0.png",
-	enemy0_plist : "res/enemy0.plist",
+	enemy0_plist : "res/enemy0.plist"
 		/*
 	bear_idle0_png : "res/bear_idle0.png",
 	bear_idle1_png : "res/bear_idle1.png",

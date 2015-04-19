@@ -59,6 +59,14 @@ var BakeryGameLayer = cc.Layer.extend({
 		countdown = 0;
 		maxcountdown = 2;
 		
+		cc.spriteFrameCache.addSpriteFrames(res.bakery_dough_knead_plist);
+		var frames = ["bakery_dough_knead1.png", "bakery_dough_knead2.png"];
+		a = [];
+		for (var i in frames) {
+			a.push(cc.spriteFrameCache.getSpriteFrame(frames[i]));
+		}
+		kneadanim =  new cc.RepeatForever(new cc.Animate(new cc.Animation(a, 0.2)));
+		
 		var deskpos = cc.p(80, 20);
 		var ovenpos = cc.p(192, 52);
 		dough = new Dough(cc.p(1*16, 7*16));
@@ -70,7 +78,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		
 		clawsprite = new cc.Sprite(res.bakery_claw_png);
 		clawsprite.setLocalZOrder(2);
-		clawsprite.setAnchorPoint(cc.p(0.6,0.85));
+		clawsprite.setAnchorPoint(cc.p(0.55,0.65));
 		this.addChild(clawsprite);
 		
 		draggeddoughsprite = new cc.Sprite(res.bakery_dough_portion_png);
@@ -83,6 +91,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		sittingdoughsprite = new cc.Sprite(res.bakery_dough_portion_png);
 		var on_desk_pos = cc.p(deskpos.x+40,deskpos.y+40);
 		sittingdoughsprite.setPosition(on_desk_pos);// + cc.p(48,48));
+		sittingdoughsprite.runAction(kneadanim);
 		sittingrollsprite = new cc.Sprite(res.bakery_roll_raw_png);
 		sittingrollsprite.setPosition(on_desk_pos);// + cc.p(48,48));
 		this.addChild(sittingdoughsprite);
@@ -188,8 +197,8 @@ var BakeryGameLayer = cc.Layer.extend({
 			else 
 				dy = (0.5 - t) * 2;
 				
-			var px = 124;
-			var py = 54;
+			var px = 120;
+			var py = 36;
 			var sy = 20;
 			clawsprite.setPosition(cc.p(px,py+dy*sy));
 		}
@@ -207,7 +216,7 @@ var BakeryGameLayer = cc.Layer.extend({
 			//do nothing
 		} else if (state === BSTATES.DRAG1) {
 			//show arm + dough, update positions
-			draggeddoughsprite.setPosition(touchPos);
+			draggeddoughsprite.setPosition(cc.p(touchPos.x+4,touchPos.y+10));
 		} else if (state === BSTATES.KNEADING) {
 			//arm action
 			//[...]
@@ -215,7 +224,7 @@ var BakeryGameLayer = cc.Layer.extend({
 			countdown -= dt;
 		} else if (state === BSTATES.DRAG2) {
 			//show arm + kneaded roll, update positions
-			draggedrollsprite.setPosition(touchPos);
+			draggedrollsprite.setPosition(cc.p(touchPos.x+4,touchPos.y+10));
 		}
 		
 		//take roll out of oven
@@ -276,7 +285,7 @@ var Desk = cc.Sprite.extend({
 	}
 });
 
-var Roll = cc.Sprite.extend({
+var BRoll = cc.Sprite.extend({
 	state:0,
 	index:0,
 	timealive:0,
@@ -352,7 +361,7 @@ var Oven = cc.Sprite.extend({
 	},
 	addRoll:function() {
 		var i = this.nextEmpty();
-		this.rolls[i] = new Roll(i);
+		this.rolls[i] = new BRoll(i);
 		this.addChild(this.rolls[i]);
 	},
 	updateRolls:function(dt) {
