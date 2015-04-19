@@ -88,7 +88,9 @@ var BakeryGameLayer = cc.Layer.extend({
 		
 		draggeddoughsprite = new cc.Sprite(res.bakery_dough_portion_png);
 		draggeddoughsprite.setLocalZOrder(2);
-		draggedrollsprite = new cc.Sprite(res.bakery_roll_raw_png);
+		draggedrollsprite = new cc.Sprite(res.bakery_roll_png);
+		draggedrollsprite.setTextureRect(cc.rect(0,0,48,48));
+		
 		draggedrollsprite.setLocalZOrder(2);
 		this.addChild(draggeddoughsprite);
 		this.addChild(draggedrollsprite); 
@@ -97,8 +99,9 @@ var BakeryGameLayer = cc.Layer.extend({
 		var on_desk_pos = cc.p(deskpos.x+40,deskpos.y+40);
 		sittingdoughsprite.setPosition(on_desk_pos);// + cc.p(48,48));
 		sittingdoughsprite.runAction(kneadanim);
-		sittingrollsprite = new cc.Sprite(res.bakery_roll_raw_png);
+		sittingrollsprite = new cc.Sprite(res.bakery_roll_png);
 		sittingrollsprite.setPosition(on_desk_pos);// + cc.p(48,48));
+		sittingrollsprite.setTextureRect(cc.rect(0,0,48,48));
 		this.addChild(sittingdoughsprite);
 		this.addChild(sittingrollsprite); 
 		
@@ -213,19 +216,17 @@ var BakeryGameLayer = cc.Layer.extend({
 			clawsprite.setPosition(cc.p(px,py+dy*sy));
 		}*/
 		
+		var neededkneaded = 5;
 		if (state === BSTATES.IDLE && !desk.empty && desk.filledwith === 0) {
 			if (desk.hovered(mousePos))
 			{
-				var debk1 = kneaded;
 				//increase
 				kneaded += dt * Math.min(10,Math.sqrt(mouseDelta.x*mouseDelta.x + mouseDelta.y*mouseDelta.y));
-				if (Math.floor(debk1) !== Math.floor(kneaded))
-					console.debug("Kneaded: " + Math.floor(kneaded));
 			}
 			else  //decrease even more
 			kneaded = Math.max(kneaded-dt*3,0);
 			
-			if (kneaded >= 10)
+			if (kneaded >= neededkneaded)
 				desk.filledwith = 1;
 			
 			//decrease
@@ -233,7 +234,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		} else {
 			kneaded = 0;
 		}
-		bar.updateVisibility(kneaded / 10);
+		bar.updateVisibility(kneaded / neededkneaded);
 		
 		mouseDelta = cc.p(0,0);
 		
@@ -271,7 +272,7 @@ var BakeryGameLayer = cc.Layer.extend({
 			var touched_roll = oven.touch(touchPos);
 			if (touched_roll != null)
 			{
-				if(touched_roll.state === 1) {
+				if(touched_roll.state === 2) {
 					++this.rollcount;
 					console.log("Roll Count: " + this.rollcount);
 				}
@@ -357,8 +358,9 @@ var BRoll = cc.Sprite.extend({
 	index:0,
 	timealive:0,
 	pos:null,
-	size:null,
-	sprite:[null,null,null],
+	s:null,
+	sprite:null,
+	dt:[],
 	ctor:function(i) {
 		this._super();
 		cc.associateWithNative( this, cc.Sprite );
@@ -368,36 +370,38 @@ var BRoll = cc.Sprite.extend({
 		var dx = 47;
 		var dy = 48;
 		this.pos = cc.p(px+(i%2)*dx,py+Math.floor(i/2)*dy);
-		this.size = cc.p(48,48);
-		this.sprite[0] = new cc.Sprite(res.bakery_roll_raw_png);
-		this.sprite[1] = new cc.Sprite(res.bakery_roll_done_png);
-		this.sprite[2] = new cc.Sprite(res.bakery_roll_burnt_png);
-		for (var k = 0; k < this.sprite.length; ++k) {
-			this.sprite[k].setPosition(this.pos);
-			this.sprite[k].setAnchorPoint(cc.p(0,0));
-			this.sprite[k].setVisible(k === 0);
-			this.addChild(this.sprite[k]);
-		}
+		this.sprite = new cc.Sprite(res.bakery_roll_png);
+		this.sprite.setPosition(this.pos);
+		this.sprite.setAnchorPoint(cc.p(0,0));
+		this.s = cc.p(48,48);
+		this.addChild(this.sprite);
 		this.state = 0;
+		this.updateVisibility(this.state);
+		this.dt = [this.random_range(2,4),this.random_range(2,4),this.random_range(1,2),this.random_range(1,1.5)];
+		console.debug("Ranges: [" + this.dt[0] + ", " + this.dt[1] + ", " + this.dt[2] + ", " + this.dt[3] + "]");
+	},
+	random_range:function(a,b) {
+		return Math.random() * (b-a) + a; 
 	},
 	update:function(dt) { //burn baby burn
-		this.timealive += dt;
-		var statechanged = false;
-		if (this.timealive > 4 && this.state === 0) {
-			this.state = 1;
-			statechanged = true;
-		} else if (this.timealive > 5 && this.state === 1) {
-			this.state = 2;
-			statechanged = true;
-		}
-			
-		if (statechanged)
-			for (var k = 0; k < this.sprite.length; ++k) {
-				this.sprite[k].setVisible(k === this.state);
+		if (state < 4) {
+			this.timealive += dt;
+			var statechanged = false;
+			if (this.timealive >= this.dt[this.state]) { //0.5-1sec and state 0 -> state 1
+				++this.state;
+				this.timealive = 0;
+				statechanged = true;
 			}
+				
+			if (statechanged)
+				this.updateVisibility(this.state);
+		}
+	},
+	updateVisibility:function(frame) {
+		this.sprite.setTextureRect(cc.rect(this.s.x*this.state,0,this.s.x,this.s.y));
 	},
 	hovered:function(pos) {
-		var rect = cc.rect(this.pos.x,this.pos.y,this.size.x,this.size.y);
+		var rect = cc.rect(this.pos.x,this.pos.y,this.s.x,this.s.y);
 		return (cc.rectContainsPoint(rect, pos));  
 	}
 
