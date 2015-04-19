@@ -11,8 +11,8 @@
     "modules" : ["cocos2d", "chipmunk"],
 
     "jsList" : [
-        "src/global.js",
         "src/resource.js",
+        "src/scene_title.js",
         "src/scene_bakery.js",
         "src/scene_store.js"
     ]
