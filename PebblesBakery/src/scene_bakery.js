@@ -222,6 +222,8 @@ var BakeryGameLayer = cc.Layer.extend({
 				if (Math.floor(debk1) !== Math.floor(kneaded))
 					console.debug("Kneaded: " + Math.floor(kneaded));
 			}
+			else  //decrease even more
+			kneaded = Math.max(kneaded-dt*3,0);
 			
 			if (kneaded >= 10)
 				desk.filledwith = 1;
@@ -244,6 +246,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		 
 		sittingdoughsprite.setVisible(desk.filledwith === 0 && !desk.empty);
 		sittingrollsprite.setVisible(desk.filledwith === 1 && !desk.empty);
+		bar.setVisible(desk.filledwith === 0 && !desk.empty);
 		 
 		
 		//Actions
@@ -284,9 +287,10 @@ var Bar = cc.Sprite.extend({
 	size:null,
 	spriteEmpty:null,
 	spriteFull:null,
+	pos:null,
 	ctor:function(pos) {
 		this._super();
-		
+		this.pos = pos;
 		
 		this.spriteEmpty = new cc.Sprite(res.bakery_bar_png);
 		this.spriteEmpty.setAnchorPoint(cc.p(0,0));
@@ -302,8 +306,11 @@ var Bar = cc.Sprite.extend({
 	},
 	updateVisibility:function(p) {
 		var prcy = Math.min(1,Math.max(0,p)); ;
-		this.spriteEmpty.setTextureRect(cc.rect(0,this.size.height * (prcy),this.size.width * 0.5,this.size.height * (1-prcy)));
-		this.spriteFull.setTextureRect(cc.rect(this.size.width * 0.5,0,this.size.width * 0.5,this.size.height * prcy));
+		this.spriteEmpty.setTextureRect(cc.rect(0,this.size.height*0,this.size.width * 0.5,this.size.height*(1-prcy)));
+		this.spriteEmpty.setPosition(this.pos.x,this.pos.y +this.size.height*(prcy));
+		
+		this.spriteFull.setTextureRect(cc.rect(this.size.width * 0.5,this.size.height * (1-prcy),this.size.width * 0.5,this.size.height * (prcy)));
+		
 	}
 });
 
@@ -376,10 +383,10 @@ var BRoll = cc.Sprite.extend({
 	update:function(dt) { //burn baby burn
 		this.timealive += dt;
 		var statechanged = false;
-		if (this.timealive > 2 && this.state === 0) {
+		if (this.timealive > 4 && this.state === 0) {
 			this.state = 1;
 			statechanged = true;
-		} else if (this.timealive > 4 && this.state === 1) {
+		} else if (this.timealive > 5 && this.state === 1) {
 			this.state = 2;
 			statechanged = true;
 		}
