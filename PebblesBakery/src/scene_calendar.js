@@ -20,10 +20,10 @@ var CSTATES =
 
 var CalendarGameLayer = cc.Layer.extend({
 	upper:null,
-	day:0, //0 to 6, mon to sun
 	cal_pos:null,
     ctor:function () {
         this._super();
+        ++g_day;
 		
 		var spriteBG = new cc.Sprite(res.cal_bg);
 		spriteBG.setAnchorPoint(cc.p(0,0));
@@ -44,13 +44,13 @@ var CalendarGameLayer = cc.Layer.extend({
 		
 		lower = new cc.Sprite(res.cal_lower);
 		lower.setLocalZOrder(1);
-		lower.setTextureRect(cc.rect(this.day*96,0,96,80));
+		lower.setTextureRect(cc.rect(g_day*96,0,96,80));
 		lower.setPosition(this.cal_pos);
 		this.addChild(lower);
 		
 		this.upper = new cc.Sprite(res.cal_upper);
 		this.upper.setLocalZOrder(2);
-		this.upper.setTextureRect(cc.rect(((this.day-1+7)%7)*96,0,96,80));
+		this.upper.setTextureRect(cc.rect(((g_day-1+7)%7)*96,0,96,80));
 		this.upper.setPosition(this.cal_pos);
 		this.addChild(this.upper);
 
@@ -144,7 +144,7 @@ var CalendarGameLayer = cc.Layer.extend({
 		return (cc.rectContainsPoint(rect, touchStartPos));  
 	},
 	nextScene:function() {
-		cc.director.runScene(new BakeryScene());
+        cc.director.runScene(new cc.TransitionFade(1.0, new BakeryScene(), cc.color(0, 0, 0, 0)));
 	}
 	
 });

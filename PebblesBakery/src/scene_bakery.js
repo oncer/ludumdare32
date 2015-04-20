@@ -48,7 +48,6 @@ var BSTATES =
 
 // Gameplay / Main layer
 var BakeryGameLayer = cc.Layer.extend({
-	rollcount:0,
 	rollicon:null,
 	rolltext:null,
 	timeleft:30,
@@ -166,12 +165,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		this.timeleft -= dt;
 		this.timetext.setString(Math.ceil(this.timeleft));
 		if(this.timeleft <= 0) {
-		
-			this.timetext.setString("HUEHUEHUE");
-			//TODO SIMON 
-			//- store this.rollcount
-			//- open store scene
-			
+            cc.director.runScene(new cc.TransitionFade(1.0, new StoreScene(), cc.color(0, 0, 0, 0)));
 		}
 		
 		/* //INTPOL SCHMARN
@@ -299,9 +293,8 @@ var BakeryGameLayer = cc.Layer.extend({
 			if (touched_roll != null)
 			{
 				if(touched_roll.state === 2) {
-					++this.rollcount;
-					//console.log("Roll Count: " + this.rollcount);
-					this.rolltext.setString(this.rollcount);
+					++g_rollCount;
+					this.rolltext.setString(g_rollCount);
 				}
 				oven.removeRoll(touched_roll.index);
 				

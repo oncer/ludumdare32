@@ -10,6 +10,11 @@
 // Matt Kapuszczak - Graphics
 /******************************************************************/
 
+// global variables :)
+var g_rollCount = 2;
+var g_day = -1;
+
+
 cc.game.onStart = function(){
     if(!cc.sys.isNative && document.getElementById("cocosLoading")) //If referenced loading.js, please remove it
         document.body.removeChild(document.getElementById("cocosLoading"));
@@ -25,7 +30,7 @@ cc.game.onStart = function(){
     cc.view.resizeWithBrowserSize(false);
     //load resources
     cc.LoaderScene.preload(g_resources, function () {
-        cc.director.runScene(new TitleScene());
+        cc.director.runScene(new StoreScene());
     }, this);
 
     if (cc._renderContext instanceof WebGLRenderingContext) {
