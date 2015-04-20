@@ -40,6 +40,16 @@ var sfx = {
 	hit_egg : "res/sfx/hit_egg.ogg",
 	miss_egg : "res/sfx/miss_egg.ogg",
 	egg_splash : "res/sfx/egg_splash.ogg",
+	bakery_bgm : "res/sfx/BGM_bakery.ogg",
+	store_bgm : "res/sfx/BGM_store.ogg",
+	scream_kid1 : "res/sfx/scream_kid1.ogg",
+	scream_kid2 : "res/sfx/scream_kid2.ogg",
+	scream_man1 : "res/sfx/scream_man1.ogg",
+	scream_man2 : "res/sfx/scream_man2.ogg",
+	scream_man3 : "res/sfx/scream_man3.ogg",
+	scream_man4 : "res/sfx/scream_man4.ogg",
+	scream_woman1 : "res/sfx/scream_woman1.ogg",
+	scream_woman2 : "res/sfx/scream_woman2.ogg",
 };
 
 var g_resources = [];
