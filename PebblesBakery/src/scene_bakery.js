@@ -55,6 +55,8 @@ var BakeryGameLayer = cc.Layer.extend({
     ctor:function () {
         this._super();
 		
+		debugbla = 0;
+		
 		this.rollicon = new cc.Sprite(res.icon_roll_png);
 		this.rollicon.setPosition(cc.p(284,164));
 		this.rollicon.setLocalZOrder(6);
@@ -135,12 +137,10 @@ var BakeryGameLayer = cc.Layer.extend({
 			},
 			onTouchMoved: function (touch, event) { 
 				touchPos = touch.getLocation();
-				touchstarted = false;
 			},
 			onTouchEnded: function (touch, event) {         
 				touchPos = null;
 				touching = false;
-				touchstarted = false;
 			}
 		});
 		cc.eventManager.addListener(touchlistener, this);
@@ -313,6 +313,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		
 		
 		prevMousePos = currentMousePos;
+		touchstarted = false;
 	},
 	makeAnim:function(frames,delay) {
 		a = [];
