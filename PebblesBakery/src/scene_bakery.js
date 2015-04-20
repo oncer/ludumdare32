@@ -51,8 +51,9 @@ var BakeryGameLayer = cc.Layer.extend({
 	rollcount:0,
 	rollicon:null,
 	rolltext:null,
-	timeleft:30,
+	timeleft:15,
 	timetext:null,
+	gameover:false,
     ctor:function () {
         this._super();
 		
@@ -163,16 +164,21 @@ var BakeryGameLayer = cc.Layer.extend({
 	update:function(dt)
 	{
 		oven.updateRolls(dt);
-		this.timeleft -= dt;
-		this.timetext.setString(Math.ceil(this.timeleft));
-		if(this.timeleft <= 0) {
-		
-			this.timetext.setString("HUEHUEHUE");
-			//TODO SIMON 
-			//- store this.rollcount
-			//- open store scene
-			
-		}
+		if (!this.gameover) {
+			this.timeleft -= dt;
+			this.timetext.setString(Math.ceil(this.timeleft));
+			if(this.timeleft <= 0) {
+				
+				this.gameover = true;
+				cc.audioEngine.playEffect(sfx.bakery_timeup, false);
+				this.timetext.setString("TIME UP");
+				//TODO SIMON 
+				//- store this.rollcount
+				//- open store scene
+				
+				
+			}
+		} //else return;
 		
 		/* //INTPOL SCHMARN
 		var sdp = sittingdoughsprite.getPosition();
