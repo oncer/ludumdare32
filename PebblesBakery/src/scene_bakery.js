@@ -275,7 +275,7 @@ var BakeryGameLayer = cc.Layer.extend({
 					
 			}
 			else { //decrease even more
-				this.kneaded = Math.max(this.kneaded-dt*3,0);
+				this.kneaded = Math.max(this.kneaded-dt,0);
 			
 				this.sitting_dough.pause();
 			}
@@ -485,7 +485,7 @@ var BRoll = cc.Sprite.extend({
 		this.addChild(this.sprite);
 		this.state = 0;
 		this.updateVisibility(this.state);
-		this.dt = [2.5,2.5,1,0.8,0.8];//[5,5,1.5,0.8,0.8];//this.random_range(4,6),this.random_range(4,6),this.random_range(1,2),0.8,0.8]; //DELAYS BETWEEN BURN this.stateS
+		this.dt = [2.5,2.5,1.75,0.8,0.8];//[5,5,1.5,0.8,0.8];//this.random_range(4,6),this.random_range(4,6),this.random_range(1,2),0.8,0.8]; //DELAYS BETWEEN BURN this.stateS
 		//console.debug("Ranges: [" + this.dt[0] + ", " + this.dt[1] + ", " + this.dt[2] + ", " + this.dt[3] + "]");
 	},
 	random_range:function(a,b) {
