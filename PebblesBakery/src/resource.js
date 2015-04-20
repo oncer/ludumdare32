@@ -14,16 +14,19 @@ var res = {
 	shop_bg_png : "res/shop_bg.png",
 	shop_fg_png : "res/shop_fg.png",
 	shop_roll_png : "res/shop_roll.png",
+	shop_roll_bubble_png : "res/shop_roll_bubble.png",
 	bear_png : "res/bear.png",
 	bear_plist : "res/bear.plist",
-	enemy0_png : "res/enemy0.png",
-	enemy0_plist : "res/enemy0.plist",
+	enemy_png : "res/enemy.png",
+	enemy_plist : "res/enemy.plist",
 	egg_png : "res/egg.png",
 	egg_plist : "res/egg.plist",
 	title_bg_png : "res/title_bg.png",
 	cal_bg : "res/cal_bg.png",
 	cal_lower : "res/cal_lower.png",
 	cal_upper : "res/cal_upper.png",
+	bmfont : "res/bmfont.fnt",
+	bmfont32 : "res/bmfont32.fnt",
 };
 
 var sfx = {
@@ -31,6 +34,7 @@ var sfx = {
 	bakery_bad : "res/sfx/bakery_oven_raw.ogg",
 	bakery_good : "res/sfx/bakery_oven_good.ogg",
 	bakery_burn : "res/sfx/bakery_oven_burn.ogg",
+	bakery_timeup : "res/sfx/bakery_timeup.ogg",
 	cal_tear : "res//sfx/tear_paper.ogg",
 };
 

@@ -19,12 +19,31 @@ const SpriteTag = {
 
 var BackgroundLayer = cc.Layer.extend({
     sprite:null,
+	rollicon:null,
+	rolltext:null,
+    rollcount:0,
     ctor: function() {
         this._super();
         this.sprite = new cc.Sprite(res.shop_bg_png);
         this.sprite.attr({x:0, y:0, anchorX:0, anchorY:0});
         this.addChild(this.sprite);
-    }
+		this.rollicon = new cc.Sprite(res.icon_roll_png);
+		this.rollicon.setPosition(cc.p(24,164));
+		this.addChild(this.rollicon);
+        this.rollcount = g_rollCount;
+		this.rolltext = new cc.LabelBMFont(this.rollcount.toString(), res.bmfont);
+		this.rolltext.setPosition(cc.p(44,163));
+		this.addChild(this.rolltext);
+        this.scheduleUpdate();
+    },
+
+    update: function() {
+        if (g_rollCount != this.rollcount) {
+            this.rollcount = g_rollCount;
+            this.rolltext.setString(this.rollcount);
+        }
+    },
+
 });
 
 var ForegroundLayer = cc.Layer.extend({
@@ -57,11 +76,12 @@ var Bear = cc.Sprite.extend({
         var idleFrames = ["bear_idle0.png", "bear_idle1.png", "bear_idle2.png", "bear_idle3.png"];
         var hitFrames = ["bear_hit1.png", "bear_hit2.png"];
         var hurtFrames = ["bear_hurt0.png", "bear_hurt1.png", "bear_hurt2.png", "bear_hurt3.png"];
-        this.idleAction = new cc.RepeatForever(new cc.Animate(mkAnim(idleFrames, 0.1)));
-        this.hitAction = new cc.Animate(mkAnim(hitFrames, 0.1))
-        this.hurtAction = new cc.Animate(mkAnim(hurtFrames, 0.1))
+        this.idleAction = cc.repeatForever(cc.animate(mkAnim(idleFrames, 0.1)));
+        this.hitAction = cc.animate(mkAnim(hitFrames, 0.1));
+        this.hurtAction = cc.repeatForever(cc.animate(mkAnim(hurtFrames, 0.1)));
         this.attr({x:32, y:20, anchorY:0});
         this.runAction(this.idleAction);
+        this.state = 0;
     },
 
     hit: function() {
@@ -70,7 +90,15 @@ var Bear = cc.Sprite.extend({
         this.scheduleOnce(function(){
                 this.runAction(this.idleAction);
             }, 0.2);
-    }
+    },
+
+    cry: function() {
+        if (this.state !== -1) {
+            this.stopAllActions();
+            this.runAction(this.hurtAction);
+            this.state = -1;
+        }
+    },
 });
 
 var Roll = cc.PhysicsSprite.extend({
@@ -109,6 +137,10 @@ var Roll = cc.PhysicsSprite.extend({
         if (this.state === 2) {
             this.body.p = cc.pAdd(this.localPos, this.enemy.body.p);
         }
+        if (this.body.p.x < 0 && this.state === 3) {
+            g_rollCount++;
+            this.state = 4;
+        }
     },
 
     attach: function() {
@@ -120,6 +152,7 @@ var Roll = cc.PhysicsSprite.extend({
         this.runAction(cc.moveTo(1, targetPos));
         this.visible = true;
         this.state = 1;
+        g_rollCount--;
         this.scheduleOnce(function() {
                 if (this.state === 1) this.state = 2;
             }, 1);
@@ -130,8 +163,12 @@ var Roll = cc.PhysicsSprite.extend({
     },
 
     detach: function() {
+        if (this.state === 0) return false;
         this.body.v_limit = Infinity;
-        var impulse = cp.v(-150, this.enemy.body.vy);
+        this.shape.u = 0.5; // friction
+        this.shape.e = 0.2; // elasticity
+        this.w = 5;
+        var impulse = cp.v(-120 - Math.random() * 30, this.enemy.body.vy);
         this.body.applyImpulse(impulse, cp.v(0, 0));
         this.shape.setLayers(LayerMask.projectileFloor);
         this.shape.group = LayerGroup.projectile;
@@ -147,6 +184,8 @@ const EnemyState = {
     Dead: 4,
     Stand: 5,
     Order: 6,
+    OrderBubble: 7,
+    Unsatisfied: 8,
 };
 
 var Enemy = cc.PhysicsSprite.extend({
@@ -154,6 +193,7 @@ var Enemy = cc.PhysicsSprite.extend({
     shape: null,
     space: null,
     roll: null,
+    bubble: null,
     walkAction: null,
     hurtAction: null,
     deathAction: null,
@@ -164,13 +204,16 @@ var Enemy = cc.PhysicsSprite.extend({
         this.space = space;
         this.attr({anchorX:0, anchorY:0});
 
-        this.roll = new Roll(this, cc.p(16, 0), cc.p(-6, 10), this.space);
+        this.roll = new Roll(this, cc.p(16, 0), cc.p(-6, 9), this.space);
+        this.bubble = new cc.Sprite(res.shop_roll_bubble_png);
+        this.bubble.attr({visible:false});
+        this.addChild(this.bubble);
 
         var walkFrames = [];
         var hurtFrames = [];
         var deathFrames = [];
         var standFrames = [];
-        var type = Math.floor(Math.random() * 1);
+        var type = Math.floor(Math.random() * 5);
         var frame_str = function(type, frame) {
             return "enemy" + type + "_" + frame + ".png";
         }
@@ -212,6 +255,9 @@ var Enemy = cc.PhysicsSprite.extend({
     },
 
     hit: function() {
+        if (this.bubble.visible) {
+            this.bubble.runAction(cc.fadeOut(0.25));
+        }
         this.stopAllActions();
         this.runAction(this.hurtAction);
         this.shape.setFriction(0.6);
@@ -234,7 +280,7 @@ var Enemy = cc.PhysicsSprite.extend({
     },
 
     isAlive: function() {
-        return this.state === EnemyState.Walk || this.state === EnemyState.Stand || this.state === EnemyState.Order;
+        return this.state === EnemyState.Walk || this.state === EnemyState.Stand || this.state === EnemyState.Order || this.state === EnemyState.OrderBubble || this.state === EnemyState.Unsatisfied;
     },
 
     update: function(dt) {
@@ -246,10 +292,12 @@ var Enemy = cc.PhysicsSprite.extend({
             this.state = EnemyState.Walk;
             this.stopAllActions();
             this.runAction(this.walkAction);
-        } else if (this.state === EnemyState.Stand && this.body.p.x < 72 && !this.flippedX) {
-            this.state = EnemyState.Order;
-            this.roll.attach();
-            this.scheduleOnce(function() {
+        } else if ((this.state === EnemyState.Stand && this.body.p.x < 72 && !this.flippedX) || (this.state === EnemyState.OrderBubble && g_rollCount > 0)) {
+            if (g_rollCount > 0) {
+                this.bubble.runAction(cc.fadeOut(0.25));
+                this.state = EnemyState.Order;
+                this.roll.attach();
+                this.scheduleOnce(function() {
                     // turn around
                     this.flippedX = true;
                     this.roll.flip();
@@ -263,6 +311,18 @@ var Enemy = cc.PhysicsSprite.extend({
                     this.setLocalZOrder(2); // render in front
                     this.roll.setLocalZOrder(2);
                 }, 1);
+            } else {
+                this.state = EnemyState.OrderBubble;
+                this.setLocalZOrder(2); // render in front
+                this.bubble.attr({x:28, y:32, opacity:0, visible:true});
+                this.bubble.runAction(cc.fadeIn(0.25));
+                this.bubble.runAction(cc.moveTo(0.25, 28, 40));
+                this.scheduleOnce(function(){
+                        if (this.state === EnemyState.OrderBubble) {
+                            this.state = EnemyState.Unsatisfied;
+                        }
+                    }, 1);
+            }
         }
     },
 });
@@ -296,7 +356,7 @@ var Projectile = cc.PhysicsSprite.extend({
         for (var i = 1; i < 2; i++) {
             crackFrames.push(frame_str(i));
         }
-        for (var i = 2; i < 7; i++) {
+        for (var i = 2; i < 8; i++) {
             breakFrames.push(frame_str(i));
         }
         this.idleAction = cc.animate(mkAnim(idleFrames, 0.5));
@@ -338,6 +398,7 @@ var Projectile = cc.PhysicsSprite.extend({
         this.body.vy = 0;
         this.body.w = -5;
         this.body.v_limit = Infinity;
+        this.body.w_limit = Infinity;
         this.body.resetForces();
         this.body.applyImpulse(cp.v(0, 350), cp.v(0, 0));
         this.state = ProjectileState.Pitch;
@@ -376,12 +437,12 @@ var Projectile = cc.PhysicsSprite.extend({
         if (this.state === ProjectileState.Break) return;
         this.stopAllActions();
         this.runAction(this.breakAction);
-        this.scheduleOnce(function(){ this.reset(); }, 0.25);
-        //this.shape.e = 0; // elasticity
-        //this.shape.u = 2; // friction
+        this.scheduleOnce(function(){ this.reset(); }, 0.3);
         this.body.vy = 0;
         this.body.w = 0;
-        this.body.v_limit = 20;
+        this.body.v_limit = 0;
+        this.body.w_limit = 0;
+        this.body.setAngle(0);
         this.state = ProjectileState.Break;
     },
 
@@ -410,22 +471,21 @@ var AnimationLayer = cc.Layer.extend({
         this.projectile = new Projectile(this.space);
         this.addChild(this.projectile, 5);
 
+        this.enemies = [];
+
 		var touchlistener = cc.EventListener.create({
 			event: cc.EventListener.TOUCH_ONE_BY_ONE,
 			swallowTouches: true,                  
 			onTouchBegan: function (touch, event) { 
                 var target = event.getCurrentTarget();
                 var bear = target.bear;
-                if (target.projectile.state === ProjectileState.Idle) {
+                if (target.projectile.state === ProjectileState.Idle && bear.state === 0) {
                     target.projectile.pitch();
                     bear.state = 1;
                 } else if (bear.state === 1) {
                     bear.hit();
-                    if (target.projectile.hit()) {
-                        bear.state = 0;
-                    } else {
-                        bear.state = 2;
-                    }
+                    target.projectile.hit();
+                    bear.state = 0;
                 }
 			}
 		});
@@ -447,6 +507,15 @@ var AnimationLayer = cc.Layer.extend({
             this.projectile.state != ProjectileState.Idle) {
             this.projectile.reset();
         }
+
+        for (var i = this.enemies.length - 1; i >= 0; i--) {
+            if (this.enemies[i].state === EnemyState.Unsatisfied) {
+                this.bear.cry();
+                this.scheduleOnce(function(){
+                        cc.director.runScene(new cc.TransitionFade(1.0, new CalendarScene(), cc.color(0, 0, 0, 0)));
+                    }, 5);
+            }
+        }
     },
 });
 
@@ -458,7 +527,7 @@ var StoreScene = cc.Scene.extend({
     onEnter:function() {
         this._super();
         cc.spriteFrameCache.addSpriteFrames(res.bear_plist);
-        cc.spriteFrameCache.addSpriteFrames(res.enemy0_plist);
+        cc.spriteFrameCache.addSpriteFrames(res.enemy_plist);
         cc.spriteFrameCache.addSpriteFrames(res.egg_plist);
         this.initPhysics();
 

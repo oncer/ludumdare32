@@ -46,7 +46,7 @@
             <key>egg3.png</key>
             <dict>
                 <key>frame</key>
-                <string>{{56,2},{16,16}}</string>
+                <string>{{2,20},{16,16}}</string>
                 <key>offset</key>
                 <string>{0,0}</string>
                 <key>rotated</key>
@@ -59,7 +59,7 @@
             <key>egg4.png</key>
             <dict>
                 <key>frame</key>
-                <string>{{74,2},{16,16}}</string>
+                <string>{{20,20},{16,16}}</string>
                 <key>offset</key>
                 <string>{0,0}</string>
                 <key>rotated</key>
@@ -72,7 +72,7 @@
             <key>egg5.png</key>
             <dict>
                 <key>frame</key>
-                <string>{{92,2},{16,16}}</string>
+                <string>{{38,20},{16,16}}</string>
                 <key>offset</key>
                 <string>{0,0}</string>
                 <key>rotated</key>
@@ -85,7 +85,20 @@
             <key>egg6.png</key>
             <dict>
                 <key>frame</key>
-                <string>{{110,2},{16,16}}</string>
+                <string>{{2,38},{16,16}}</string>
+                <key>offset</key>
+                <string>{0,0}</string>
+                <key>rotated</key>
+                <false/>
+                <key>sourceColorRect</key>
+                <string>{{0,0},{16,16}}</string>
+                <key>sourceSize</key>
+                <string>{16,16}</string>
+            </dict>
+            <key>egg7.png</key>
+            <dict>
+                <key>frame</key>
+                <string>{{20,38},{16,16}}</string>
                 <key>offset</key>
                 <string>{0,0}</string>
                 <key>rotated</key>
@@ -103,9 +116,9 @@
             <key>realTextureFileName</key>
             <string>egg.png</string>
             <key>size</key>
-            <string>{128,20}</string>
+            <string>{56,56}</string>
             <key>smartupdate</key>
-            <string>$TexturePacker:SmartUpdate:d08439f7607270594a221dea43a2426f:cf3496fdefbd8600f4897285afbb09db:59d5ac319192a000c02d94f2d55cf236$</string>
+            <string>$TexturePacker:SmartUpdate:3b2f58222bb80f988c6d3a94a1eb6304:7ff5358d493c761609091528632bd9a5:59d5ac319192a000c02d94f2d55cf236$</string>
             <key>textureFileName</key>
             <string>egg.png</string>
         </dict>
