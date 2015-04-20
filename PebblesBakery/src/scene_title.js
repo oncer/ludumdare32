@@ -2,6 +2,8 @@ var TitleLayer = cc.Layer.extend({
     sprite:null,
     ctor: function() {
         this._super();
+		cc.audioEngine.setEffectsVolume(0.5);
+		cc.audioEngine.stopMusic();
         this.sprite = new cc.Sprite(res.title_bg_png);
         this.sprite.attr({x:0, y:0, anchorX:0, anchorY:0});
         this.addChild(this.sprite);

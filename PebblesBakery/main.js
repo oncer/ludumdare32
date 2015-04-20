@@ -11,7 +11,7 @@
 /******************************************************************/
 
 // global variables :)
-var g_rollCount = 2;
+var g_rollCount = 0;
 var g_day = -1;
 
 
@@ -24,10 +24,9 @@ cc.game.onStart = function(){
     // Adjust viewport meta
     cc.view.adjustViewPort(true);
     // Setup the resolution policy and design resolution size
-    var policy = new cc.ResolutionPolicy(cc.ContainerStrategy.ORIGINAL_CONTAINER, cc.ContentStrategy.EXACT_FIT);
-    cc.view.setDesignResolutionSize(320, 180, policy);
+    cc.view.setDesignResolutionSize(320, 180, cc.ResolutionPolicy.SHOW_ALL);
     // The game will be resized when browser size change
-    cc.view.resizeWithBrowserSize(false);
+    cc.view.resizeWithBrowserSize(true);
     //load resources
     cc.LoaderScene.preload(g_resources, function () {
         cc.director.runScene(new BakeryScene());

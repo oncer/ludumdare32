@@ -4,7 +4,8 @@ var BakeryScene = cc.Scene.extend({
     onEnter:function () {
         this._super();
 
-		cc.audioEngine.setEffectsVolume(0.1);
+		cc.audioEngine.setEffectsVolume(0.5);
+		cc.audioEngine.stopMusic();
 		cc.audioEngine.playMusic(sfx.bakery_bgm, true);
         var bgLayer = new BakeryBGLayer();
         gameLayer = new BakeryGameLayer();

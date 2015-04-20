@@ -2,7 +2,8 @@
 var CalendarScene = cc.Scene.extend({
     onEnter:function () {
         this._super();
-		cc.audioEngine.setEffectsVolume(0.1);
+		cc.audioEngine.setEffectsVolume(0.5);
+		cc.audioEngine.stopMusic();
         var gameLayer = new CalendarGameLayer();
 		gameLayer.scheduleUpdate();
         this.addChild(gameLayer);
