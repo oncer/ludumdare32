@@ -148,7 +148,6 @@ var BakeryGameLayer = cc.Layer.extend({
 			event: cc.EventListener.MOUSE,
 			onMouseMove: function(event){
 				currentMousePos = event.getLocation();
-				
 			}
 		},this);
 		
