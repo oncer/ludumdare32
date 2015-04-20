@@ -51,9 +51,10 @@ var BakeryGameLayer = cc.Layer.extend({
 	rollcount:0,
 	rollicon:null,
 	rolltext:null,
-	timeleft:15,
+	timeleft:20,
 	timetext:null,
 	gameover:false,
+	lerptime:0,
     ctor:function () {
         this._super();
 		
@@ -163,6 +164,7 @@ var BakeryGameLayer = cc.Layer.extend({
     },
 	update:function(dt)
 	{
+
 		oven.updateRolls(dt);
 		if (!this.gameover) {
 			this.timeleft -= dt;
@@ -179,6 +181,10 @@ var BakeryGameLayer = cc.Layer.extend({
 				
 			}
 		} //else return;
+		
+		this.lerptime += dt;
+		sittingdoughsprite.setPosition(cc.pLerp(sittingdoughsprite.getPosition(),on_desk_pos,Math.min(1,this.lerptime)));
+		sittingrollsprite.setPosition(cc.pLerp(sittingrollsprite.getPosition(),on_desk_pos,Math.min(1,this.lerptime)));
 		
 		/* //INTPOL SCHMARN
 		var sdp = sittingdoughsprite.getPosition();
@@ -221,20 +227,23 @@ var BakeryGameLayer = cc.Layer.extend({
 				//countdown = maxcountdown;
 				desk.empty = false;
 				desk.filledwith = 0; //raw dough
-				//sittingdoughsprite.setPosition(draggeddoughsprite.getPosition());
+				sittingdoughsprite.setPosition(draggeddoughsprite.getPosition());
+				this.lerptime = 0;
 			}
 		} else if (state === BSTATES.DRAG2) {
 			//(roll) released -> IDLE
 			if (!touching) {
 				state = BSTATES.IDLE;
 				desk.empty = false;
+				sittingrollsprite.setPosition(draggedrollsprite.getPosition());
+				this.lerptime = 0;
 			}
 			//oven hovered & oven != full -> IDLE + desk := empty
 			else if (oven.hovered(touchPos,0) && !oven.isFull())
 			{
 				touching = false;
 				state = BSTATES.IDLE;
-				var r = oven.addRoll();
+				var r = oven.addRoll(cc.pAdd(draggedrollsprite.getPosition(),cc.p(-24,-24)));
 			}
 		}
 		
@@ -243,7 +252,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		
 		//Kneading 
 		var mouseDelta = cc.p(currentMousePos.x - prevMousePos.x, currentMousePos.y - prevMousePos.y);
-		var neededkneaded = 5;
+		var neededkneaded = 3;
 		if (state === BSTATES.IDLE && !desk.empty && desk.filledwith === 0) { //full unkneaded desk while idle
 			if (desk.hovered(currentMousePos,tol))
 			{
@@ -280,7 +289,8 @@ var BakeryGameLayer = cc.Layer.extend({
 		draggeddoughsprite.setVisible(state === BSTATES.DRAG1);
 		draggedrollsprite.setVisible(state === BSTATES.DRAG2);
 		//ARM.setVisible(state == BSTATES.DRAG1 || state == BSTATES.DRAG2);
-		 
+		
+		
 		 
 		sittingdoughsprite.setVisible(desk.filledwith === 0 && !desk.empty);
 		sittingrollsprite.setVisible(desk.filledwith === 1 && !desk.empty);
@@ -436,33 +446,41 @@ var BRoll = cc.Sprite.extend({
 	state:0,
 	index:0,
 	timealive:0,
+	endpos:null,
 	pos:null,
 	s:null,
 	sprite:null,
 	dt:[],
-	ctor:function(i) {
+	ctor:function(i,startpos) {
 		this._super();
 		cc.associateWithNative( this, cc.Sprite );
+		
+		this.pos = startpos;
+		
 		this.index = i;
 		var px = 216;
 		var py = 26;
 		var dx = 47;
 		var dy = 48;
-		this.pos = cc.p(px+(i%2)*dx,py+Math.floor(i/2)*dy);
+		this.endpos = cc.p(px+(i%2)*dx,py+Math.floor(i/2)*dy);
 		this.sprite = new cc.Sprite(res.bakery_roll_png);
-		this.sprite.setPosition(this.pos);
+		this.sprite.setPosition(startpos);
 		this.sprite.setAnchorPoint(cc.p(0,0));
 		this.s = cc.p(48,48);
 		this.addChild(this.sprite);
 		this.state = 0;
 		this.updateVisibility(this.state);
-		this.dt = [5,5,1.5,0.8,0.8];//this.random_range(4,6),this.random_range(4,6),this.random_range(1,2),0.8,0.8]; //DELAYS BETWEEN BURN STATES
+		this.dt = [2.5,2.5,1,0.8,0.8];//[5,5,1.5,0.8,0.8];//this.random_range(4,6),this.random_range(4,6),this.random_range(1,2),0.8,0.8]; //DELAYS BETWEEN BURN STATES
 		//console.debug("Ranges: [" + this.dt[0] + ", " + this.dt[1] + ", " + this.dt[2] + ", " + this.dt[3] + "]");
 	},
 	random_range:function(a,b) {
 		return Math.random() * (b-a) + a; 
 	},
 	update:function(dt) { //burn baby burn
+		
+		this.pos = cc.pLerp(this.pos,this.endpos,Math.min(this.timealive,1));
+		this.sprite.setPosition(this.pos);
+		
 		if (state < 5) {
 			this.timealive += dt;
 			var statechanged = false;
@@ -519,9 +537,9 @@ var Oven = cc.Sprite.extend({
 	isFull:function() {
 		return this.nextEmpty() == -1;
 	},
-	addRoll:function() {
+	addRoll:function(pos) {
 		var i = this.nextEmpty();
-		this.rolls[i] = new BRoll(i);
+		this.rolls[i] = new BRoll(i,pos);
 		this.addChild(this.rolls[i]);
 		return this.rolls[i];
 	},
@@ -532,7 +550,8 @@ var Oven = cc.Sprite.extend({
 		}
 	},
 	removeRoll:function(i) {
-		this.rolls[i].removeFromParent(true);
+		this.rolls[i].scheduleOnce(function() {this.removeFromParent(true)},0.5);
+		this.rolls[i].sprite.runAction(new cc.FadeOut(0.5));
 		this.rolls[i] = null;
 	},
 	touch:function(pos){
