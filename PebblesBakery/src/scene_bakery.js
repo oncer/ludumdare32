@@ -215,7 +215,7 @@ var BakeryGameLayer = cc.Layer.extend({
 				cc.audioEngine.playEffect(sfx.bakery_grab, false);
 			}
 			else {
-				//drag this.kneaded roll from this.desk
+				//drag kneaded roll from desk
 				if (touchstarted && this.desk.hovered(touchStartPos,this.tol) && !this.desk.empty && this.desk.filledwith === 1) {
 					this.state = BSTATES.DRAG2;
 					this.desk.empty = true;
@@ -227,7 +227,7 @@ var BakeryGameLayer = cc.Layer.extend({
 			if (!touching)
 				this.state = BSTATES.IDLE;
 			//this.desk hovered & this.desk == empty -> KNEADING
-			else if (this.desk.hovered(touchPos,this.tol) && this.desk.empty)
+			else if (this.desk.hovered(touchPos,this.tol+20) && this.desk.empty)
 			{
 				this.state = BSTATES.IDLE;
 				//this.countdown = this.maxcountdown;
@@ -245,7 +245,7 @@ var BakeryGameLayer = cc.Layer.extend({
 				this.lerptime = 0;
 			}
 			//this.oven hovered & this.oven != full -> IDLE + this.desk := empty
-			else if (this.oven.hovered(touchPos,0) && !this.oven.isFull())
+			else if (this.oven.hovered(touchPos,30) && !this.oven.isFull())
 			{
 				touching = false;
 				this.state = BSTATES.IDLE;
