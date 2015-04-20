@@ -12,11 +12,15 @@ var res = {
 	bakery_claw_png : "res/bakery_claw.png",
 	icon_roll_png : "res/icon_roll.png",
 	shop_bg_png : "res/shop_bg.png",
+	shop_fg_png : "res/shop_fg.png",
 	shop_roll_png : "res/shop_roll.png",
 	bear_png : "res/bear.png",
 	bear_plist : "res/bear.plist",
 	enemy0_png : "res/enemy0.png",
-	enemy0_plist : "res/enemy0.plist"
+	enemy0_plist : "res/enemy0.plist",
+	egg_png : "res/egg.png",
+	egg_plist : "res/egg.plist",
+	title_bg_png : "res/title_bg.png",
 };
 
 var g_resources = [];

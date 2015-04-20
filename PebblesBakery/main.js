@@ -69,6 +69,8 @@ cc.game.onStart = function(){
 
     } else if (cc._renderContext._context instanceof CanvasRenderingContext2D) {
         cc._renderContext._context.imageSmoothingEnabled = false;
+        cc._renderContext._context.mozImageSmoothingEnabled = false;
+        cc._renderContext._context.webkitImageSmoothingEnabled = false;
     }
 };
 cc.game.run();
