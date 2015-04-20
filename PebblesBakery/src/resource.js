@@ -24,6 +24,8 @@ var res = {
 	cal_bg : "res/cal_bg.png",
 	cal_lower : "res/cal_lower.png",
 	cal_upper : "res/cal_upper.png",
+	bmfont : "res/bmfont.fnt",
+	bmfont32 : "res/bmfont32.fnt",
 };
 
 var sfx = {

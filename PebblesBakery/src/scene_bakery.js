@@ -56,18 +56,17 @@ var BakeryGameLayer = cc.Layer.extend({
     ctor:function () {
         this._super();
 		
-		debugbla = 0;
 		
 		this.rollicon = new cc.Sprite(res.icon_roll_png);
 		this.rollicon.setPosition(cc.p(284,164));
 		this.rollicon.setLocalZOrder(6);
 		this.addChild(this.rollicon);
-		this.rolltext = new cc.LabelTTF("0",  'Times New Roman', 16);
-		this.rolltext.setPosition(cc.p(304,164));
+		this.rolltext = new cc.LabelBMFont("0", res.bmfont);
+		this.rolltext.setPosition(cc.p(304,163));
 		this.rolltext.setLocalZOrder(6);
 		this.addChild(this.rolltext);
-		this.timetext = new cc.LabelTTF(""+this.timeleft,  'Times New Roman', 32);
-		this.timetext.setPosition(cc.p(160,160));
+		this.timetext = new cc.LabelBMFont(""+this.timeleft, res.bmfont32, -1, cc.TEXT_ALIGNMENT_CENTER);
+		this.timetext.setPosition(cc.p(160,155));
 		this.timetext.setLocalZOrder(7);
 		this.addChild(this.timetext);
 		
@@ -140,7 +139,6 @@ var BakeryGameLayer = cc.Layer.extend({
 				touchStartPos = touchPos;
 				touching = true;
 				touchstarted = true;
-				console.debug(touchPos);
 				return true;
 			},
 			onTouchMoved: function (touch, event) { 
@@ -261,7 +259,6 @@ var BakeryGameLayer = cc.Layer.extend({
 			
 			if (kneaded >= neededkneaded)
 			{
-				console.debug("DONE KNEADING");
 				desk.filledwith = 1;
 				kneaded = 0;
 				sittingdoughsprite.pause();
@@ -271,7 +268,6 @@ var BakeryGameLayer = cc.Layer.extend({
 			kneaded = Math.max(kneaded-dt,0);
 		}
 		bar.updateVisibility(kneaded / neededkneaded);
-		console.debug(kneaded);
 		
 		//if (kneaded > 0) console.debug(kneaded);
 					
@@ -455,7 +451,7 @@ var BRoll = cc.Sprite.extend({
 		this.state = 0;
 		this.updateVisibility(this.state);
 		this.dt = [5,5,1.5,0.8,0.8];//this.random_range(4,6),this.random_range(4,6),this.random_range(1,2),0.8,0.8]; //DELAYS BETWEEN BURN STATES
-		console.debug("Ranges: [" + this.dt[0] + ", " + this.dt[1] + ", " + this.dt[2] + ", " + this.dt[3] + "]");
+		//console.debug("Ranges: [" + this.dt[0] + ", " + this.dt[1] + ", " + this.dt[2] + ", " + this.dt[3] + "]");
 	},
 	random_range:function(a,b) {
 		return Math.random() * (b-a) + a; 

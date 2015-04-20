@@ -7,7 +7,7 @@ var TitleLayer = cc.Layer.extend({
         this.addChild(this.sprite);
 		
 		
-		var text = new cc.LabelTTF("Touch to play!");
+		var text = new cc.LabelBMFont("Touch to play!", res.bmfont);
 		text.setPosition(cc.p(160,16));
 		text.setLocalZOrder(1);
 		this.addChild(text);

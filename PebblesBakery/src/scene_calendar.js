@@ -69,7 +69,6 @@ var CalendarGameLayer = cc.Layer.extend({
 				touchStartPos = touchPos;
 				touching = true;
 				touchstarted = true;
-				console.debug(touchPos);
 				return true;
 			},
 			onTouchMoved: function (touch, event) { 
