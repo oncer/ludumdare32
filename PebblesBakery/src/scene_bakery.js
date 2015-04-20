@@ -3,7 +3,10 @@ var BakeryScene = cc.Scene.extend({
 	gameLayer:null,
     onEnter:function () {
         this._super();
+
 		cc.audioEngine.setEffectsVolume(0.1);
+		cc.audioEngine.stopMusic();
+		cc.audioEngine.playMusic(sfx.bakery_bgm, true);
         var bgLayer = new BakeryBGLayer();
         gameLayer = new BakeryGameLayer();
         this.addChild(bgLayer);
@@ -23,13 +26,6 @@ var BakeryBGLayer = cc.Layer.extend({
         this._super();
 		
 		var spriteBG = new cc.Sprite(res.bakery_bg_png);
-		/*spriteBG.position=cc.p(0,0);
-		spriteBG.attr({
-            x: 0,
-			y: 0,
-			anchorX: 0,
-			anchorY: 0
-        });*/
 		spriteBG.setAnchorPoint(cc.p(0,0));
 		
         this.addChild(spriteBG);
