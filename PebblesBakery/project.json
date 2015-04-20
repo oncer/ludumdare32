@@ -13,6 +13,7 @@
     "jsList" : [
         "src/resource.js",
         "src/scene_title.js",
+        "src/scene_calendar.js",
         "src/scene_bakery.js",
         "src/scene_store.js"
     ]

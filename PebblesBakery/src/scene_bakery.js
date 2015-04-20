@@ -3,6 +3,7 @@ var BakeryScene = cc.Scene.extend({
 	gameLayer:null,
     onEnter:function () {
         this._super();
+		cc.audioEngine.setEffectsVolume(0.1);
         var bgLayer = new BakeryBGLayer();
         gameLayer = new BakeryGameLayer();
         this.addChild(bgLayer);
@@ -188,7 +189,7 @@ var BakeryGameLayer = cc.Layer.extend({
 			//drag from dough
 			if (touchstarted && dough.hovered(touchStartPos,tol)) {
 				state = BSTATES.DRAG1;
-				
+				cc.audioEngine.playEffect(sfx.bakery_grab, false);
 			}
 			else {
 				//drag kneaded roll from desk
@@ -305,6 +306,11 @@ var BakeryGameLayer = cc.Layer.extend({
 				var pp = new Popup(cc.p(touched_roll.pos.x+20,touched_roll.pos.y+16),1,16,res.popup_png,cc.rect(80*type,0,80,64));
 				pp.setLocalZOrder(5);
 				this.addChild(pp);
+				
+				if(type === 1)
+					cc.audioEngine.playEffect(sfx.bakery_good, false);
+				else
+					cc.audioEngine.playEffect(sfx.bakery_bad, false);
 			}
 		}
 		
@@ -457,8 +463,11 @@ var BRoll = cc.Sprite.extend({
 				statechanged = true;
 			}
 				
-			if (statechanged)
+			if (statechanged) {
 				this.updateVisibility(this.state);
+				if (this.state == 5)
+					cc.audioEngine.playEffect(sfx.bakery_burn, false);
+			}
 		}
 	},
 	updateVisibility:function(frame) {
