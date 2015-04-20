@@ -21,6 +21,9 @@ var res = {
 	egg_png : "res/egg.png",
 	egg_plist : "res/egg.plist",
 	title_bg_png : "res/title_bg.png",
+	cal_bg : "res/cal_bg.png",
+	cal_lower : "res/cal_lower.png",
+	cal_upper : "res/cal_upper.png",
 };
 
 var sfx = {
@@ -28,6 +31,7 @@ var sfx = {
 	bakery_bad : "res/sfx/bakery_oven_raw.ogg",
 	bakery_good : "res/sfx/bakery_oven_good.ogg",
 	bakery_burn : "res/sfx/bakery_oven_burn.ogg",
+	cal_tear : "res//sfx/tear_paper.ogg",
 };
 
 var g_resources = [];
