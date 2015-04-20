@@ -51,7 +51,7 @@ var CalendarGameLayer = cc.Layer.extend({
 		
 		lower = new cc.Sprite(res.cal_lower);
 		lower.setLocalZOrder(1);
-		lower.setTextureRect(cc.rect(g_day*96,0,96,80));
+		lower.setTextureRect(cc.rect((g_day%7)*96,0,96,80));
 		lower.setPosition(this.cal_pos);
 		this.addChild(lower);
 		
