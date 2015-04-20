@@ -5,6 +5,7 @@ CMakeLists.txt
 /PebblesBakery/tools
 
 !/PebblesBakery/frameworks/cocos2d-html5/cocos2d/core/textures/TexturesWebGL.js
+!/PebblesBakery/frameworks/cocos2d-html5/cocos2d/audio/CCAudio.js
 
 /GFX/Thumbs.db
 

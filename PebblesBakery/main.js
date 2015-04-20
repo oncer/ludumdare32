@@ -11,7 +11,7 @@
 /******************************************************************/
 
 // global variables :)
-var g_rollCount = 2;
+var g_rollCount = 0;
 var g_day = -1;
 
 
