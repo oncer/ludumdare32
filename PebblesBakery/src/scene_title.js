@@ -9,7 +9,7 @@ var TitleLayer = cc.Layer.extend({
 			event: cc.EventListener.TOUCH_ONE_BY_ONE,
 			swallowTouches: true,                  
 			onTouchBegan: function (touch, event) { 
-                cc.director.runScene(new BakeryScene());
+                cc.director.runScene(new cc.TransitionFade(1.0, new CalendarScene(), cc.color(0, 0, 0, 0)));
             }
         });
         cc.eventManager.addListener(touchlistener, this);
