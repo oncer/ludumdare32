@@ -5,7 +5,6 @@ var BakeryScene = cc.Scene.extend({
         this._super();
 
 		cc.audioEngine.setEffectsVolume(0.1);
-		cc.audioEngine.stopMusic();
 		cc.audioEngine.playMusic(sfx.bakery_bgm, true);
         var bgLayer = new BakeryBGLayer();
         gameLayer = new BakeryGameLayer();
@@ -90,8 +89,8 @@ var BakeryGameLayer = cc.Layer.extend({
 		touchstarted = false;
 		
 		cc.spriteFrameCache.addSpriteFrames(res.bakery_dough_plist); //_portion03 _dough03
-		doughanim = new cc.RepeatForever(this.makeAnim(["this.dough0.png", "this.dough1.png", "this.dough2.png", "this.dough3.png"],0.1));
-		kneadanim = new cc.RepeatForever(this.makeAnim(["this.dough_portion0.png", "this.dough_portion1.png", "this.dough_portion2.png", "this.dough_portion3.png"],0.07));
+		var doughanim = new cc.RepeatForever(this.makeAnim(["dough0.png", "dough1.png", "dough2.png", "dough3.png"],0.1));
+		var kneadanim = new cc.RepeatForever(this.makeAnim(["dough_portion0.png", "dough_portion1.png", "dough_portion2.png", "dough_portion3.png"],0.07));
 		
 		var deskpos = cc.p(114, 34);
 		var ovenpos = cc.p(216, 20);
@@ -178,8 +177,9 @@ var BakeryGameLayer = cc.Layer.extend({
 			if(this.timeleft <= 0) {
 				
 				this.gameover = true;
-				cc.audioEngine.playEffect(sfx.bakery_timeup, false);
 				this.timetext.setString("TIME UP");
+				cc.audioEngine.stopMusic();
+				cc.audioEngine.playEffect(sfx.bakery_timeup, false);
                 cc.director.runScene(new cc.TransitionFade(1.0, new StoreScene(), cc.color(0, 0, 0, 0)));
 			}
 		} //else return;
