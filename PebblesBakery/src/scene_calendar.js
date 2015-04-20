@@ -21,6 +21,8 @@ var CSTATES =
 var CalendarGameLayer = cc.Layer.extend({
 	upper:null,
 	cal_pos:null,
+	deltapos:null,
+	state:CSTATES.IDLE,
     ctor:function () {
         this._super();
         ++g_day;
@@ -28,8 +30,6 @@ var CalendarGameLayer = cc.Layer.extend({
 		var spriteBG = new cc.Sprite(res.cal_bg);
 		spriteBG.setAnchorPoint(cc.p(0,0));
         this.addChild(spriteBG);
-		
-		state = CSTATES.IDLE;
 		
 		//.setLocalZOrder(0);
 		
@@ -106,30 +106,36 @@ var CalendarGameLayer = cc.Layer.extend({
 		//TEAR: move upper and check pos dif
 		
 		//
-		if (state === CSTATES.IDLE)
+		if (this.state === CSTATES.IDLE)
 		{
 			if (touchstarted && this.upperHovered())
-				state = CSTATES.TEAR;
-		} else if (state === CSTATES.TEAR || state === CSTATES.TORN) {
+			{
+				deltapos = cc.pSub(this.upper.getPosition(),currentMousePos);
+				this.state = CSTATES.TEAR;
+			}
+		} else if (this.state === CSTATES.TEAR || this.state === CSTATES.TORN) {
 			if (touching) {
 				//update position
-				this.upper.setPosition(cc.p(currentMousePos.x+4,currentMousePos.y+10));
-				if (state === CSTATES.TEAR) {
+				this.upper.setPosition(cc.pAdd(currentMousePos,deltapos));
+				if (this.state === CSTATES.TEAR) {
 					if (this.upper.getPosition !== this.cal_pos) {
 						//check torn
-						state = CSTATES.TORN;
+						this.state = CSTATES.TORN;
 						cc.audioEngine.playEffect(sfx.cal_tear, false);
-						console.debug("TORN");
 					}
 				}
 			} else {
-				state = CSTATES.DROP;
+				this.state = CSTATES.DROP;
 				var p = this.upper.getPosition();
-				this.upper.runAction(new cc.MoveTo(4,cc.p(p.x, p.y-416)));
+				this.upper.runAction(new cc.MoveTo(3,cc.p(p.x, p.y-416)));
 				//TODO better anim
 				//TODO schedule next scene
 				this.scheduleOnce(this.nextScene, 1.5);
 			}
+		} else if (this.state === CSTATES.DROP) {
+			var p = this.upper.getPosition();
+			var dy = (50-p.y)*dt;
+			this.upper.setPosition(cc.pAdd(p,cc.p(0,-dy)));
 		}
 		
 		prevMousePos = currentMousePos;
@@ -140,7 +146,7 @@ var CalendarGameLayer = cc.Layer.extend({
 		var tolerance = 8;
 		var p = this.upper.getPosition();
 		var s = cc.p(70,80);
-		var rect = cc.rect(p.x-(s.x + tolerance)*0.5,p.y-(s.y + tolerance)*0.5,(s.x + tolerance),(s.y + tolerance));
+		var rect = cc.rect(p.x-(s.x + tolerance)*0.5,p.y-(s.y + tolerance)*0.5,(s.x + tolerance),(s.y - 5));
 		return (cc.rectContainsPoint(rect, touchStartPos));  
 	},
 	nextScene:function() {
