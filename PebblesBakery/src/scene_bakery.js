@@ -204,7 +204,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		if (this.state === BSTATES.IDLE) {
 			
 			//drag from this.dough
-			if (this.touchstarted && this.dough.hovered(this.touchStartPos,this.tol)) {
+			if (this.touchstarted && this.dough.hovered(this.touchStartPos,this.tol) && this.desk.empty) {
 				this.state = BSTATES.DRAG1;
 				cc.audioEngine.playEffect(sfx.bakery_grab, false);
 			}
