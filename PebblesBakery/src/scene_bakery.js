@@ -3,6 +3,7 @@ var BakeryScene = cc.Scene.extend({
 	gameLayer:null,
     onEnter:function () {
         this._super();
+		cc.audioEngine.setEffectsVolume(0.1);
         var bgLayer = new BakeryBGLayer();
         gameLayer = new BakeryGameLayer();
         this.addChild(bgLayer);
@@ -55,6 +56,8 @@ var BakeryGameLayer = cc.Layer.extend({
     ctor:function () {
         this._super();
 		
+		debugbla = 0;
+		
 		this.rollicon = new cc.Sprite(res.icon_roll_png);
 		this.rollicon.setPosition(cc.p(284,164));
 		this.rollicon.setLocalZOrder(6);
@@ -71,8 +74,8 @@ var BakeryGameLayer = cc.Layer.extend({
 		state = BSTATES.IDLE;
 		touching = false;
 		touchStartPos = cc.p(-1,-1);
-		mousePos = cc.p(-64,-64);
-		mouseDelta = cc.p(0,0);
+		currentMousePos = cc.p(-64,-64);
+		prevMousePos = currentMousePos;
 		touchstarted = false;
 		countdown = 0;
 		maxcountdown = 2;
@@ -135,23 +138,18 @@ var BakeryGameLayer = cc.Layer.extend({
 			},
 			onTouchMoved: function (touch, event) { 
 				touchPos = touch.getLocation();
-				touchstarted = false;
 			},
 			onTouchEnded: function (touch, event) {         
 				touchPos = null;
 				touching = false;
-				touchstarted = false;
 			}
 		});
 		cc.eventManager.addListener(touchlistener, this);
 		cc.eventManager.addListener({
 			event: cc.EventListener.MOUSE,
 			onMouseMove: function(event){
-				var prevMousePos = mousePos;
-				mousePos = event.getLocation();//this.convert(event.getLocationX(),event.getLocationY());
+				currentMousePos = event.getLocation();
 				
-                console.log("mouse prev: " + prevMousePos.x + ", " + prevMousePos.y + "; cur: " + mousePos.x + ", " + mousePos.y);
-				mouseDelta = cc.p(mousePos.x - prevMousePos.x, mousePos.y - prevMousePos.y);
 			}
 		},this);
 		
@@ -192,7 +190,7 @@ var BakeryGameLayer = cc.Layer.extend({
 			//drag from dough
 			if (touchstarted && dough.hovered(touchStartPos,tol)) {
 				state = BSTATES.DRAG1;
-				
+				cc.audioEngine.playEffect(sfx.bakery_grab, false);
 			}
 			else {
 				//drag kneaded roll from desk
@@ -231,36 +229,17 @@ var BakeryGameLayer = cc.Layer.extend({
 		}
 		
 		//Bear claw positions
-		clawsprite.setPosition(mousePos);
-		/*
-		if (state !== BSTATES.KNEADING) {
-			clawsprite.setPosition(mousePos);
-		} else {
-			var t = countdown/maxcountdown; // [1 --> 0]
-			t = Math.abs(Math.sin(t*10));//Math.max(Math.min(t,1),0); //clamp to 0,1
-			
-			//t [1, 0.5] --> dy [1 -> 0]
-			var dy;
-			if (t > 0.5)
-				dy = (t - 0.5) * 2;
-			//t [0.5, 0] --> dy [0 -> 1]
-			else 
-				dy = (0.5 - t) * 2;
-				
-			var px = 120;
-			var py = 36;
-			var sy = 20;
-			clawsprite.setPosition(cc.p(px,py+dy*sy));
-		}*/
+		clawsprite.setPosition(currentMousePos);
 		
+		//Kneading 
+		var mouseDelta = cc.p(currentMousePos.x - prevMousePos.x, currentMousePos.y - prevMousePos.y);
 		var neededkneaded = 5;
 		if (state === BSTATES.IDLE && !desk.empty && desk.filledwith === 0) { //full unkneaded desk while idle
-			if (desk.hovered(mousePos,tol))
+			if (desk.hovered(currentMousePos,tol))
 			{
-				var movement = Math.min(10,Math.sqrt(mouseDelta.x*mouseDelta.x + mouseDelta.y*mouseDelta.y))
+				var movement = Math.min(600*dt,Math.sqrt(mouseDelta.x*mouseDelta.x + mouseDelta.y*mouseDelta.y))
 				//increase
-				kneaded += dt * movement;
-                console.debug("movement: " + movement + ", kneaded: " + kneaded);
+				kneaded += movement * 0.01;
 				
 				if (movement > 1)
 					sittingdoughsprite.resume();
@@ -285,10 +264,8 @@ var BakeryGameLayer = cc.Layer.extend({
 			//decrease
 			kneaded = Math.max(kneaded-dt,0);
 		}
-		
 		bar.updateVisibility(kneaded / neededkneaded);
-		
-		mouseDelta = cc.p(0,0);
+		console.debug(kneaded);
 		
 		//if (kneaded > 0) console.debug(kneaded);
 					
@@ -330,9 +307,19 @@ var BakeryGameLayer = cc.Layer.extend({
 				var pp = new Popup(cc.p(touched_roll.pos.x+20,touched_roll.pos.y+16),1,16,res.popup_png,cc.rect(80*type,0,80,64));
 				pp.setLocalZOrder(5);
 				this.addChild(pp);
+				
+				if(type === 1)
+					cc.audioEngine.playEffect(sfx.bakery_good, false);
+				else
+					cc.audioEngine.playEffect(sfx.bakery_bad, false);
 			}
 		}
 		
+		
+		
+		
+		prevMousePos = currentMousePos;
+		touchstarted = false;
 	},
 	makeAnim:function(frames,delay) {
 		a = [];
@@ -477,8 +464,11 @@ var BRoll = cc.Sprite.extend({
 				statechanged = true;
 			}
 				
-			if (statechanged)
+			if (statechanged) {
 				this.updateVisibility(this.state);
+				if (this.state == 5)
+					cc.audioEngine.playEffect(sfx.bakery_burn, false);
+			}
 		}
 	},
 	updateVisibility:function(frame) {
