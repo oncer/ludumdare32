@@ -522,6 +522,7 @@ var Oven = cc.Sprite.extend({
 		
 		this.pos = pos;
 		this.size = size;
+        this.rolls = [null, null, null, null];
 		
 		this.drawNode = cc.DrawNode.create();
 		//this.addChild(this.drawNode,100);
