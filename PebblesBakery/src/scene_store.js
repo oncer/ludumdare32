@@ -267,30 +267,35 @@ var Enemy = cc.PhysicsSprite.extend({
     },
 });
 
+const ProjectileState = {
+    Reset: 0,
+    Idle: 1,
+    Pitch: 2,
+    Fly: 3
+};
+
 var Projectile = cc.PhysicsSprite.extend({
     body:null,
     shape:null,
     space:null,
+    state:null,
     ctor: function(space) {
         this._super(res.shop_roll_png);
         this.space = space;
 
         var contentSize = this.getContentSize();
         this.body = new cp.Body(1, cp.momentForCircle(1, 0, contentSize.width / 2, cp.v(0, 0)));
-        this.body.p = cc.p(48, -16);
         this.space.addBody(this.body);
         this.shape = new cp.CircleShape(this.body, contentSize.width / 2, cp.v(0, 0));
         this.shape.e = 0.5; // elasticity
         this.shape.u = 0.8; // friction
-        this.shape.setCollisionType(SpriteTag.projectile);
         this.space.addShape(this.shape);
-        this.shape.layers = LayerMask.projectileFloor | LayerMask.projectileWall | LayerMask.enemyProjectile;
         this.shape.group = LayerGroup.projectile;
         this.setBody(this.body);
+        this.reset();
     },
 
     hit: function() {
-        console.log(this.body.p.y);
         if (this.body.p.y < 70 && this.body.p.y > 34) {
             var diffy = this.body.p.y - 40;
             this.body.vx = 0;
@@ -307,9 +312,36 @@ var Projectile = cc.PhysicsSprite.extend({
                 this.body.p.y = 40;
                 this.body.applyImpulse(cp.v(70, 300), cp.v(0, 0));
             }
+            this.state = ProjectileState.Fly;
             return true;
         }
         return false;
+    },
+    
+    reset: function() {
+        this.shape.setCollisionType(SpriteTag.projectile);
+        this.body.v_limit = 0;
+        this.body.vx = 0;
+        this.body.vy = 0;
+        this.body.p = cc.p(48, -16);
+        this.body.w = 0;
+        this.body.resetForces();
+        this.body.setAngle(0);
+        this.runAction(cc.moveTo(0.5, cc.p(48, 30)));
+        this.state = ProjectileState.Reset;
+        this.scheduleOnce(function(){ this.state = ProjectileState.Idle; }, 0.5);
+        this.shape.layers = 0;
+    },
+
+    pitch: function() {
+        this.body.vx = 0;
+        this.body.vy = 0;
+        this.body.w = -5;
+        this.body.v_limit = Infinity;
+        this.body.resetForces();
+        this.body.applyImpulse(cp.v(0, 350), cp.v(0, 0));
+        this.state = ProjectileState.Pitch;
+        this.shape.layers = LayerMask.projectileFloor | LayerMask.projectileWall | LayerMask.enemyProjectile;
     }
 });
 
@@ -317,7 +349,7 @@ var AnimationLayer = cc.Layer.extend({
     space: null,
     time: 0,
     timeToSpawn: 2,
-    projectiles: [],
+    projectile: null,
     enemies: [],
 
     ctor: function(space) {
@@ -330,29 +362,21 @@ var AnimationLayer = cc.Layer.extend({
         this.bear = new Bear();
         this.addChild(this.bear);
 
+        this.projectile = new Projectile(this.space);
+        this.addChild(this.projectile, 5);
+
 		var touchlistener = cc.EventListener.create({
 			event: cc.EventListener.TOUCH_ONE_BY_ONE,
 			swallowTouches: true,                  
 			onTouchBegan: function (touch, event) { 
                 var target = event.getCurrentTarget();
                 var bear = target.bear;
-                target.clearInactiveProjectiles();
-                if (target.projectiles.length === 0) {
-                    var projectile = new Projectile(target.space);
-                    var projectileb = projectile.body;
-                    target.addChild(projectile, 5);
-                    target.projectiles.push(projectile);
-                    projectileb.p = cc.p(48, -16);
-                    projectileb.vx = 0;
-                    projectileb.vy = 0;
-                    projectileb.w = -5;
-                    projectileb.resetForces();
-                    projectileb.applyImpulse(cp.v(0, 350), cp.v(0, 0));
+                if (target.projectile.state === ProjectileState.Idle) {
+                    target.projectile.pitch();
                     bear.state = 1;
                 } else if (bear.state === 1) {
-                    var projectile = target.projectiles[target.projectiles.length - 1];
                     bear.hit();
-                    if (projectile.hit()) {
+                    if (target.projectile.hit()) {
                         bear.state = 0;
                     } else {
                         bear.state = 2;
@@ -361,15 +385,6 @@ var AnimationLayer = cc.Layer.extend({
 			}
 		});
 		cc.eventManager.addListener(touchlistener, this);
-    },
-
-    clearInactiveProjectiles: function() {
-        for (var i = this.projectiles.length - 1; i >= 0; i--) {
-            if (this.projectiles[i].body.p.y < 0) {
-                this.removeChild(this.projectiles[i]);
-                this.projectiles.splice(i, 1);
-            }
-        }
     },
 
     update: function(dt) {
@@ -381,6 +396,11 @@ var AnimationLayer = cc.Layer.extend({
             this.enemies.push(enemy);
             this.addChild(enemy, 1);
             this.addChild(enemy.roll, 1);
+        }
+
+        if (this.projectile.body.p.y < 0 && this.projectile.state !== ProjectileState.Reset &&
+            this.projectile.state != ProjectileState.Idle) {
+            this.projectile.reset();
         }
     },
 });
@@ -400,6 +420,7 @@ var StoreScene = cc.Scene.extend({
         this.addChild(new BackgroundLayer());
         this.animLayer = new AnimationLayer(this.space);
         this.addChild(this.animLayer);
+        this.addChild(new ForegroundLayer());
 
         //Add the Debug Layer:
         /*var debugNode = new cc.PhysicsDebugNode(this.space);
@@ -490,3 +511,4 @@ var StoreScene = cc.Scene.extend({
         this.animLayer.update(dt);
     }
 });
+

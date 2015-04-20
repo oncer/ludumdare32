@@ -235,7 +235,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		if (state === BSTATES.IDLE && !desk.empty && desk.filledwith === 0) { //full unkneaded desk while idle
 			if (desk.hovered(currentMousePos,tol))
 			{
-				var movement = Math.min(10,Math.sqrt(mouseDelta.x*mouseDelta.x + mouseDelta.y*mouseDelta.y))
+				var movement = Math.min(600 * dt,Math.sqrt(mouseDelta.x*mouseDelta.x + mouseDelta.y*mouseDelta.y))
 				//increase
 				kneaded += movement * 0.01;
 				
