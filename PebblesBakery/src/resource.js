@@ -11,6 +11,8 @@ var res = {
 	bakery_bar_png : "res/bakery_bar.png",
 	bakery_claw_png : "res/bakery_claw.png",
 	icon_roll_png : "res/icon_roll.png",
+	icon_money_png : "res/icon_money.png",
+	icon_time_png : "res/icon_time.png",
 	shop_bg_png : "res/shop_bg.png",
 	shop_fg_png : "res/shop_fg.png",
 	shop_roll_png : "res/shop_roll.png",
