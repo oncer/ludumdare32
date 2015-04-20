@@ -23,6 +23,12 @@ var CalendarGameLayer = cc.Layer.extend({
 	cal_pos:null,
 	deltapos:null,
 	state:CSTATES.IDLE,
+	touchPos:null,
+	touchStartPos:null,
+	touchEndPos:null,
+	touchstarted:false,
+	touching:false,
+	touchended:false,
     ctor:function () {
         this._super();
         ++g_day;
@@ -54,36 +60,38 @@ var CalendarGameLayer = cc.Layer.extend({
 		this.upper.setPosition(this.cal_pos);
 		this.addChild(this.upper);
 
-		
-		touching = false;
-		touchStartPos = cc.p(-1,-1);
-		currentMousePos = cc.p(-64,-64);
-		prevMousePos = currentMousePos;
-		touchstarted = false;
+	
+		this.touchStartPos = cc.p(-64,-64);
+		this.touchPos = this.touchStartPos;
+		this.touchEndPos = this.touchStartPos;
 		
 		cc.eventManager.addListener(cc.EventListener.create({
 			event: cc.EventListener.TOUCH_ONE_BY_ONE,
 			swallowTouches: true,
 			onTouchBegan: function (touch, event) { 
-				touchPos = touch.getLocation();
-				touchStartPos = touchPos;
-				touching = true;
-				touchstarted = true;
+                var target = event.getCurrentTarget();
+				target.touchPos = touch.getLocation();
+				target.touchStartPos = target.touchPos;
+				target.touching = true;
+				target.touchstarted = true;
 				return true;
 			},
 			onTouchMoved: function (touch, event) { 
-				touchPos = touch.getLocation();
+                var target = event.getCurrentTarget();
+				target.touchPos = touch.getLocation();
+				target.touching = true;
 			},
-			onTouchEnded: function (touch, event) {         
-				touchPos = null;
-				touching = false;
+			onTouchEnded: function (touch, event) {  
+                var target = event.getCurrentTarget();
+				target.touching = false;
+				target.touchended = true;
 			}
 		}), this);
 		cc.eventManager.addListener({
 			event: cc.EventListener.MOUSE,
 			onMouseMove: function(event){
-				currentMousePos = event.getLocation();
-				
+                var target = event.getCurrentTarget();
+				target.touchPos = event.getLocation();
 			}
 		},this);
 		
@@ -93,7 +101,7 @@ var CalendarGameLayer = cc.Layer.extend({
 	update:function(dt)
 	{
 		//Bear claw positions
-		clawsprite.setPosition(currentMousePos);
+		clawsprite.setPosition(this.touchPos);
 		
 		
 		//IDLE -> if upper touched -> TEAR
@@ -108,15 +116,15 @@ var CalendarGameLayer = cc.Layer.extend({
 		//
 		if (this.state === CSTATES.IDLE)
 		{
-			if (touchstarted && this.upperHovered())
+			if (this.touchstarted && this.upperHovered())
 			{
-				deltapos = cc.pSub(this.upper.getPosition(),currentMousePos);
+				this.deltapos = cc.pSub(this.upper.getPosition(),this.touchPos);
 				this.state = CSTATES.TEAR;
 			}
 		} else if (this.state === CSTATES.TEAR || this.state === CSTATES.TORN) {
-			if (touching) {
+			if (this.touching) {
 				//update position
-				this.upper.setPosition(cc.pAdd(currentMousePos,deltapos));
+				this.upper.setPosition(cc.pAdd(this.touchPos,this.deltapos));
 				if (this.state === CSTATES.TEAR) {
 					if (this.upper.getPosition !== this.cal_pos) {
 						//check torn
@@ -138,8 +146,8 @@ var CalendarGameLayer = cc.Layer.extend({
 			this.upper.setPosition(cc.pAdd(p,cc.p(0,-dy)));
 		}
 		
-		prevMousePos = currentMousePos;
-		touchstarted = false;
+		this.touchstarted = false;
+		this.touchended = false;
 	},
 	upperHovered:function()
 	{
@@ -147,7 +155,7 @@ var CalendarGameLayer = cc.Layer.extend({
 		var p = this.upper.getPosition();
 		var s = cc.p(70,80);
 		var rect = cc.rect(p.x-(s.x + tolerance)*0.5,p.y-(s.y + tolerance)*0.5,(s.x + tolerance),(s.y - 5));
-		return (cc.rectContainsPoint(rect, touchStartPos));  
+		return (cc.rectContainsPoint(rect, this.touchStartPos));  
 	},
 	nextScene:function() {
         cc.director.runScene(new cc.TransitionFade(1.0, new BakeryScene(), cc.color(0, 0, 0, 0)));
