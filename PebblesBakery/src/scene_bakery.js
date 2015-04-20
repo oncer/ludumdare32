@@ -4,7 +4,8 @@ var BakeryScene = cc.Scene.extend({
     onEnter:function () {
         this._super();
 
-		cc.audioEngine.setEffectsVolume(0.1);
+		cc.audioEngine.setEffectsVolume(0.5);
+		cc.audioEngine.stopMusic();
 		cc.audioEngine.playMusic(sfx.bakery_bgm, true);
         var bgLayer = new BakeryBGLayer();
         gameLayer = new BakeryGameLayer();
@@ -64,6 +65,12 @@ var BakeryGameLayer = cc.Layer.extend({
 	kneaded:0,
 	tol:8,
 	neededkneaded:3,
+	touchPos:null,
+	touchStartPos:null,
+	touchEndPos:null,
+	touchstarted:false,
+	touching:false,
+	touchended:false,
     ctor:function () {
         this._super();
 		
@@ -81,12 +88,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		this.timetext.setLocalZOrder(7);
 		this.addChild(this.timetext);
 		
-		
-		touching = false;
-		touchStartPos = cc.p(-1,-1);
-		currentMousePos = cc.p(-64,-64);
-		prevMousePos = currentMousePos;
-		touchstarted = false;
+	
 		
 		cc.spriteFrameCache.addSpriteFrames(res.bakery_dough_plist); //_portion03 _dough03
 		var doughanim = new cc.RepeatForever(this.makeAnim(["dough0.png", "dough1.png", "dough2.png", "dough3.png"],0.1));
@@ -138,29 +140,39 @@ var BakeryGameLayer = cc.Layer.extend({
 		this.sitting_roll.setVisible(false);
 		this.bar.setVisible(false);
 		
-		var touchlistener = cc.EventListener.create({
+		
+		this.touchStartPos = cc.p(-64,-64);
+		this.touchPos = this.touchStartPos;
+		this.touchEndPos = this.touchStartPos;
+		this.prevTouchPos = this.touchPos;
+		
+		cc.eventManager.addListener(cc.EventListener.create({
 			event: cc.EventListener.TOUCH_ONE_BY_ONE,
 			swallowTouches: true,
 			onTouchBegan: function (touch, event) { 
-				touchPos = touch.getLocation();
-				touchStartPos = touchPos;
-				touching = true;
-				touchstarted = true;
+                var target = event.getCurrentTarget();
+				target.touchPos = touch.getLocation();
+				target.touchStartPos = target.touchPos;
+				target.touching = true;
+				target.touchstarted = true;
 				return true;
 			},
 			onTouchMoved: function (touch, event) { 
-				touchPos = touch.getLocation();
+                var target = event.getCurrentTarget();
+				target.touchPos = touch.getLocation();
+				target.touching = true;
 			},
-			onTouchEnded: function (touch, event) {         
-				touchPos = null;
-				touching = false;
+			onTouchEnded: function (touch, event) {  
+                var target = event.getCurrentTarget();
+				target.touching = false;
+				target.touchended = true;
 			}
-		});
-		cc.eventManager.addListener(touchlistener, this);
+		}), this);
 		cc.eventManager.addListener({
 			event: cc.EventListener.MOUSE,
 			onMouseMove: function(event){
-				currentMousePos = event.getLocation();
+                var target = event.getCurrentTarget();
+				target.touchPos = event.getLocation();
 			}
 		},this);
 		
@@ -188,31 +200,17 @@ var BakeryGameLayer = cc.Layer.extend({
 		this.sitting_dough.setPosition(cc.pLerp(this.sitting_dough.getPosition(),this.on_desk_pos,Math.min(1,this.lerptime)));
 		this.sitting_roll.setPosition(cc.pLerp(this.sitting_roll.getPosition(),this.on_desk_pos,Math.min(1,this.lerptime)));
 		
-		/* //INTPOL SCHMARN
-		var sdp = this.sitting_dough.getPosition();
-		if (sdp.x !== this.on_desk_pos.x || sdp.y !== this.on_desk_pos.y) {
-			var dx = (this.on_desk_pos.x - sdp.x)*dt;
-			var dy = (this.on_desk_pos.y - sdp.y)*dt;
-			sdp.x = sdp.x + dy;
-			sdp.y = sdp.y + dx;
-			if (dx < 0) sdp.x = Math.floor(sdp.x);
-			else sdp.x = Math.ceil(sdp.x);
-			if (dy < 0) sdp.y = Math.floor(sdp.y);
-			else sdp.y = Math.ceil(sdp.y);
-			this.sitting_dough.setPosition(sdp);
-		}*/
-		
 		//Transitions
 		if (this.state === BSTATES.IDLE) {
 			
 			//drag from this.dough
-			if (touchstarted && this.dough.hovered(touchStartPos,this.tol)) {
+			if (this.touchstarted && this.dough.hovered(this.touchStartPos,this.tol)) {
 				this.state = BSTATES.DRAG1;
 				cc.audioEngine.playEffect(sfx.bakery_grab, false);
 			}
 			else {
 				//drag kneaded roll from desk
-				if (touchstarted && this.desk.hovered(touchStartPos,this.tol) && !this.desk.empty && this.desk.filledwith === 1) {
+				if (this.touchstarted && this.desk.hovered(this.touchStartPos,this.tol) && !this.desk.empty && this.desk.filledwith === 1) {
 					this.state = BSTATES.DRAG2;
 					this.desk.empty = true;
 				}
@@ -220,10 +218,10 @@ var BakeryGameLayer = cc.Layer.extend({
 			
 		} else if (this.state === BSTATES.DRAG1) {
 			//(this.dough) released -> IDLE
-			if (!touching)
+			if (!this.touching)
 				this.state = BSTATES.IDLE;
 			//this.desk hovered & this.desk == empty -> KNEADING
-			else if (this.desk.hovered(touchPos,this.tol+20) && this.desk.empty)
+			else if (this.desk.hovered(this.touchPos,this.tol+20) && this.desk.empty)
 			{
 				this.state = BSTATES.IDLE;
 				//this.countdown = this.maxcountdown;
@@ -231,33 +229,34 @@ var BakeryGameLayer = cc.Layer.extend({
 				this.desk.filledwith = 0; //raw this.dough
 				this.sitting_dough.setPosition(this.dragged_dough.getPosition());
 				this.lerptime = 0;
+				this.bar.fadeIn();
 			}
 		} else if (this.state === BSTATES.DRAG2) {
 			//(roll) released -> IDLE
-			if (!touching) {
+			if (!this.touching) {
 				this.state = BSTATES.IDLE;
 				this.desk.empty = false;
 				this.sitting_roll.setPosition(this.dragged_roll.getPosition());
 				this.lerptime = 0;
 			}
 			//this.oven hovered & this.oven != full -> IDLE + this.desk := empty
-			else if (this.oven.hovered(touchPos,30) && !this.oven.isFull())
+			else if (this.oven.hovered(this.touchPos,30) && !this.oven.isFull())
 			{
-				touching = false;
+				this.touching = false;
 				this.state = BSTATES.IDLE;
 				var r = this.oven.addRoll(cc.pAdd(this.dragged_roll.getPosition(),cc.p(-24,-24)));
 			}
 		}
 		
 		//Bear claw positions
-		clawsprite.setPosition(currentMousePos);
+		clawsprite.setPosition(this.touchPos);
 		
 		//Kneading 
-		var mouseDelta = cc.p(currentMousePos.x - prevMousePos.x, currentMousePos.y - prevMousePos.y);
+		var touchDelta = cc.p(this.touchPos.x - this.prevTouchPos.x, this.touchPos.y - this.prevTouchPos.y);
 		if (this.state === BSTATES.IDLE && !this.desk.empty && this.desk.filledwith === 0) { //full unthis.kneaded this.desk while idle
-			if (this.desk.hovered(currentMousePos,this.tol))
+			if (this.desk.hovered(this.touchPos,this.tol))
 			{
-				var movement = Math.min(600 * dt,Math.sqrt(mouseDelta.x*mouseDelta.x + mouseDelta.y*mouseDelta.y))
+				var movement = Math.min(600 * dt,Math.sqrt(touchDelta.x*touchDelta.x + touchDelta.y*touchDelta.y))
 				//increase
 				this.kneaded += movement * 0.01;
 				
@@ -303,16 +302,16 @@ var BakeryGameLayer = cc.Layer.extend({
 			//do nothing
 		} else if (this.state === BSTATES.DRAG1) {
 			//show arm + this.dough, update positions
-			this.dragged_dough.setPosition(cc.p(touchPos.x+4,touchPos.y+10));
+			this.dragged_dough.setPosition(cc.p(this.touchPos.x+4,this.touchPos.y+10));
 		} else if (this.state === BSTATES.DRAG2) {
 			//show arm + this.kneaded roll, update positions
-			this.dragged_roll.setPosition(cc.p(touchPos.x+4,touchPos.y+10));
+			this.dragged_roll.setPosition(cc.p(this.touchPos.x+4,this.touchPos.y+10));
 		}
 		
 		//take roll out of this.oven
-		if (touchstarted && this.state == BSTATES.IDLE)
+		if (this.touchstarted && this.state == BSTATES.IDLE)
 		{
-			var touched_roll = this.oven.touch(touchPos);
+			var touched_roll = this.oven.touch(this.touchPos);
 			if (touched_roll != null)
 			{
 				if(touched_roll.state === 2) {
@@ -336,8 +335,10 @@ var BakeryGameLayer = cc.Layer.extend({
 		
 		
 		
-		prevMousePos = currentMousePos;
-		touchstarted = false;
+		this.prevTouchPos = this.touchPos;
+		
+		this.touchstarted = false;
+		this.touchended = false;
 	},
 	makeAnim:function(frames,delay) {
 		a = [];
@@ -387,6 +388,12 @@ var Bar = cc.Sprite.extend({
 		this.addChild(this.spriteFull);
 		
 		this.updateVisibility(0);
+	},
+	fadeIn:function() {
+		this.spriteEmpty.opacity = 0;
+		this.spriteEmpty.runAction(cc.fadeIn(0.25));
+		this.spriteFull.opacity = 0;
+		this.spriteFull.runAction(cc.fadeIn(0.25));
 	},
 	updateVisibility:function(p) {
 		var prcy = Math.min(1,Math.max(0,p)); ;

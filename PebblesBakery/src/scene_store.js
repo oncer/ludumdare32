@@ -87,8 +87,13 @@ var Bear = cc.Sprite.extend({
     hit: function() {
         this.stopAllActions();
         this.runAction(this.hitAction);
+        this.state = 1;
         this.scheduleOnce(function(){
-                this.runAction(this.idleAction);
+                if (this.state !== -1) {
+                    this.stopAllActions();
+                    this.runAction(this.idleAction);
+                    this.state = 0;
+                }
             }, 0.2);
     },
 
@@ -144,6 +149,7 @@ var Roll = cc.PhysicsSprite.extend({
     },
 
     attach: function() {
+		cc.audioEngine.playEffect(sfx.buy_roll, false);
         this.opacity = 0;
         this.body.p = cc.pAdd(this.localPos, this.enemy.body.p);
         var targetPos = this.body.p;
@@ -198,6 +204,7 @@ var Enemy = cc.PhysicsSprite.extend({
     hurtAction: null,
     deathAction: null,
     standAction: null,
+    screamSounds: null,
     state: 0,
     ctor: function(space) {
         this._super("#enemy0_0.png");
@@ -209,11 +216,36 @@ var Enemy = cc.PhysicsSprite.extend({
         this.bubble.attr({visible:false});
         this.addChild(this.bubble);
 
+        var type = Math.floor(Math.random() * 5);
+        switch (type) {
+            case 0: // old man
+            case 1: // young man
+            case 2: // old man
+                this.screamSounds = [
+                    sfx.scream_man1,
+                    sfx.scream_man2,
+                    sfx.scream_man3,
+                    sfx.scream_man4
+                    ];
+                break;
+            case 3: // boy
+                this.screamSounds = [
+                    sfx.scream_kid1,
+                    sfx.scream_kid2
+                    ];
+                break;
+            case 4: // young woman
+                this.screamSounds = [
+                    sfx.scream_woman1,
+                    sfx.scream_woman2
+                    ];
+                break;
+        }
+
         var walkFrames = [];
         var hurtFrames = [];
         var deathFrames = [];
         var standFrames = [];
-        var type = Math.floor(Math.random() * 5);
         var frame_str = function(type, frame) {
             return "enemy" + type + "_" + frame + ".png";
         }
@@ -255,6 +287,8 @@ var Enemy = cc.PhysicsSprite.extend({
     },
 
     hit: function() {
+        var sfxUrl = this.screamSounds[Math.floor(Math.random() * this.screamSounds.length)];
+		cc.audioEngine.playEffect(sfxUrl, false);
         if (this.bubble.visible) {
             this.bubble.runAction(cc.fadeOut(0.25));
         }
@@ -406,6 +440,7 @@ var Projectile = cc.PhysicsSprite.extend({
 
     hit: function() {
         if (this.body.p.y < 70 && this.body.p.y > 34) {
+		    cc.audioEngine.playEffect(sfx.hit_egg, false);
             var diffy = this.body.p.y - 40;
             this.body.vx = 0;
             this.body.vy = 0;
@@ -425,6 +460,7 @@ var Projectile = cc.PhysicsSprite.extend({
             this.shape.layers = LayerMask.projectileFloor | LayerMask.projectileWall | LayerMask.enemyProjectile;
             return true;
         }
+		cc.audioEngine.playEffect(sfx.miss_egg, false);
         return false;
     },
     
@@ -434,6 +470,7 @@ var Projectile = cc.PhysicsSprite.extend({
     },
 
     break_: function() {
+		cc.audioEngine.playEffect(sfx.egg_splash, false);
         if (this.state === ProjectileState.Break) return;
         this.stopAllActions();
         this.runAction(this.breakAction);
@@ -481,11 +518,9 @@ var AnimationLayer = cc.Layer.extend({
                 var bear = target.bear;
                 if (target.projectile.state === ProjectileState.Idle && bear.state === 0) {
                     target.projectile.pitch();
-                    bear.state = 1;
-                } else if (bear.state === 1) {
+                } else if (target.projectile.state === ProjectileState.Pitch && bear.state === 0) {
                     bear.hit();
                     target.projectile.hit();
-                    bear.state = 0;
                 }
 			}
 		});
@@ -510,6 +545,7 @@ var AnimationLayer = cc.Layer.extend({
 
         for (var i = this.enemies.length - 1; i >= 0; i--) {
             if (this.enemies[i].state === EnemyState.Unsatisfied) {
+                cc.audioEngine.stopMusic();
                 this.bear.cry();
                 this.scheduleOnce(function(){
                         cc.director.runScene(new cc.TransitionFade(1.0, new CalendarScene(), cc.color(0, 0, 0, 0)));
@@ -526,6 +562,9 @@ var StoreScene = cc.Scene.extend({
 
     onEnter:function() {
         this._super();
+		cc.audioEngine.setEffectsVolume(0.5);
+		cc.audioEngine.stopMusic();
+		cc.audioEngine.playMusic(sfx.store_bgm, true);
         cc.spriteFrameCache.addSpriteFrames(res.bear_plist);
         cc.spriteFrameCache.addSpriteFrames(res.enemy_plist);
         cc.spriteFrameCache.addSpriteFrames(res.egg_plist);
@@ -620,6 +659,7 @@ var StoreScene = cc.Scene.extend({
 
         this.space.addCollisionHandler(SpriteTag.projectile, SpriteTag.enemy, this.collisionProjectileEnemyBegin.bind(this), null, null, null);
         this.space.addCollisionHandler(SpriteTag.enemy, SpriteTag.floor, null, null, this.collisionEnemyFloorPostSolve.bind(this), null);
+        this.space.addCollisionHandler(SpriteTag.enemy, SpriteTag.wall, null, null, this.collisionEnemyFloorPostSolve.bind(this), null);
         this.space.addCollisionHandler(SpriteTag.projectile, SpriteTag.floor, this.collisionProjectileFloorBegin.bind(this), null, null, null);
         this.space.addCollisionHandler(SpriteTag.projectile, SpriteTag.wall, this.collisionProjectileWallBegin.bind(this), null, null, null);
         this.space.addCollisionHandler(SpriteTag.enemy, SpriteTag.enemy, null, this.collisionEnemyEnemyPreSolve.bind(this), null, null);
