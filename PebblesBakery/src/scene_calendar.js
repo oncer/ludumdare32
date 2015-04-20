@@ -20,7 +20,7 @@ var CSTATES =
 
 var CalendarGameLayer = cc.Layer.extend({
 	upper:null,
-	day:1, //0 to 6, mon to sun
+	day:0, //0 to 6, mon to sun
 	cal_pos:null,
     ctor:function () {
         this._super();
@@ -48,13 +48,11 @@ var CalendarGameLayer = cc.Layer.extend({
 		lower.setPosition(this.cal_pos);
 		this.addChild(lower);
 		
-		if (this.day > 0) {
-			this.upper = new cc.Sprite(res.cal_upper);
-			this.upper.setLocalZOrder(2);
-			this.upper.setTextureRect(cc.rect((this.day-1)*96,0,96,80));
-			this.upper.setPosition(this.cal_pos);
-			this.addChild(this.upper);
-		}
+		this.upper = new cc.Sprite(res.cal_upper);
+		this.upper.setLocalZOrder(2);
+		this.upper.setTextureRect(cc.rect(((this.day-1+7)%7)*96,0,96,80));
+		this.upper.setPosition(this.cal_pos);
+		this.addChild(this.upper);
 
 		
 		touching = false;
@@ -111,14 +109,8 @@ var CalendarGameLayer = cc.Layer.extend({
 		//
 		if (state === CSTATES.IDLE)
 		{
-			if (touchstarted) {
-				if (this.upperHovered())
-					state = CSTATES.TEAR;
-				else if (this.day === 0)  {
-					state = CSTATES.DROP;
-					this.scheduleOnce(this.nextScene, 1.5);
-				}
-			}
+			if (touchstarted && this.upperHovered())
+				state = CSTATES.TEAR;
 		} else if (state === CSTATES.TEAR || state === CSTATES.TORN) {
 			if (touching) {
 				//update position
@@ -146,7 +138,6 @@ var CalendarGameLayer = cc.Layer.extend({
 	},
 	upperHovered:function()
 	{
-		if (this.day === 0) return false;
 		var tolerance = 8;
 		var p = this.upper.getPosition();
 		var s = cc.p(70,80);
