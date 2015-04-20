@@ -127,7 +127,7 @@ var CalendarGameLayer = cc.Layer.extend({
 					if (this.upper.getPosition !== this.cal_pos) {
 						//check torn
 						state = CSTATES.TORN;
-						//SOUND cc.audioEngine.playEffect(sfx.tear, false);
+						cc.audioEngine.playEffect(sfx.cal_tear, false);
 						console.debug("TORN");
 					}
 				}

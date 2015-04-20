@@ -31,6 +31,7 @@ var sfx = {
 	bakery_bad : "res/sfx/bakery_oven_raw.ogg",
 	bakery_good : "res/sfx/bakery_oven_good.ogg",
 	bakery_burn : "res/sfx/bakery_oven_burn.ogg",
+	cal_tear : "res//sfx/tear_paper.ogg",
 };
 
 var g_resources = [];
