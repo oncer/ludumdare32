@@ -27,6 +27,16 @@ var BackgroundLayer = cc.Layer.extend({
     }
 });
 
+var ForegroundLayer = cc.Layer.extend({
+    sprite:null,
+    ctor: function() {
+        this._super();
+        this.sprite = new cc.Sprite(res.shop_fg_png);
+        this.sprite.attr({x:0, y:0, anchorX:0, anchorY:0});
+        this.addChild(this.sprite);
+    }
+});
+
 function mkAnim(frames, delay) {
     a = []
     for (var i in frames) {

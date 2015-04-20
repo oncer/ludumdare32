@@ -150,6 +150,7 @@ var BakeryGameLayer = cc.Layer.extend({
 				var prevMousePos = mousePos;
 				mousePos = event.getLocation();//this.convert(event.getLocationX(),event.getLocationY());
 				
+                console.log("mouse prev: " + prevMousePos.x + ", " + prevMousePos.y + "; cur: " + mousePos.x + ", " + mousePos.y);
 				mouseDelta = cc.p(mousePos.x - prevMousePos.x, mousePos.y - prevMousePos.y);
 			}
 		},this);
@@ -259,6 +260,7 @@ var BakeryGameLayer = cc.Layer.extend({
 				var movement = Math.min(10,Math.sqrt(mouseDelta.x*mouseDelta.x + mouseDelta.y*mouseDelta.y))
 				//increase
 				kneaded += dt * movement;
+                console.debug("movement: " + movement + ", kneaded: " + kneaded);
 				
 				if (movement > 1)
 					sittingdoughsprite.resume();
