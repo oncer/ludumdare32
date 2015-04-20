@@ -125,6 +125,13 @@ var BakeryGameLayer = cc.Layer.extend({
 		this.addChild(sittingrollsprite); 
 		
 		
+		
+		draggeddoughsprite.setVisible(false);
+		draggedrollsprite.setVisible(false);
+		sittingdoughsprite.setVisible(false);
+		sittingrollsprite.setVisible(false);
+		bar.setVisible(false);
+		
 		var touchlistener = cc.EventListener.create({
 			event: cc.EventListener.TOUCH_ONE_BY_ONE,
 			swallowTouches: true,
