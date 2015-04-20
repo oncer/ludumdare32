@@ -228,6 +228,7 @@ var BakeryGameLayer = cc.Layer.extend({
 				this.desk.filledwith = 0; //raw this.dough
 				this.sitting_dough.setPosition(this.dragged_dough.getPosition());
 				this.lerptime = 0;
+				this.bar.fadeIn();
 			}
 		} else if (this.state === BSTATES.DRAG2) {
 			//(roll) released -> IDLE
@@ -386,6 +387,12 @@ var Bar = cc.Sprite.extend({
 		this.addChild(this.spriteFull);
 		
 		this.updateVisibility(0);
+	},
+	fadeIn:function() {
+		this.spriteEmpty.opacity = 0;
+		this.spriteEmpty.runAction(cc.fadeIn(0.25));
+		this.spriteFull.opacity = 0;
+		this.spriteFull.runAction(cc.fadeIn(0.25));
 	},
 	updateVisibility:function(p) {
 		var prcy = Math.min(1,Math.max(0,p)); ;
