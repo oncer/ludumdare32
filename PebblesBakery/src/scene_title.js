@@ -12,6 +12,7 @@ var TitleLayer = cc.Layer.extend({
                 cc.director.runScene(new BakeryScene());
             }
         });
+        cc.eventManager.addListener(touchlistener, this);
     }
 });
 

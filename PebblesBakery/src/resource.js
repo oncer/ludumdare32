@@ -16,7 +16,9 @@ var res = {
 	bear_png : "res/bear.png",
 	bear_plist : "res/bear.plist",
 	enemy0_png : "res/enemy0.png",
-	enemy0_plist : "res/enemy0.plist"
+	enemy0_plist : "res/enemy0.plist",
+	egg_png : "res/egg.png",
+	egg_plist : "res/egg.plist",
 };
 
 var g_resources = [];

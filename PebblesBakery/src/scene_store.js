@@ -1,14 +1,19 @@
 const LayerMask = {
-    enemy: 1,
-    roll1: 2,
-    roll2: 4,
-    floor: 8,
+    enemyProjectile: 1,
+    enemyWall: 2,
+    enemyFloor: 4,
+    projectileFloor: 8,
+    projectileWall: 16,
+};
+
+const LayerGroup = {
+    projectile: 1,
 };
 
 const SpriteTag = {
     wall: 0,
     enemy: 1,
-    roll: 2,
+    projectile: 2,
     floor: 3,
 };
 
@@ -58,20 +63,87 @@ var Bear = cc.Sprite.extend({
     }
 });
 
+var Roll = cc.PhysicsSprite.extend({
+    cpos: null, // enemy center pos
+    offset: null, // offset from enemy center pos
+    localPos: null, // calculated position relative to parent enemy
+    body: null,
+    shape: null,
+    space: null,
+    enemy: null,
+    state: 0, // 0 invisible; 1 fadein; 2 attached; 3 detached
+
+    ctor: function(enemy, cpos, offset, space) {
+        this._super(res.shop_roll_png);
+        this.cpos = cpos;
+        this.offset = offset;
+        this.space = space;
+        this.enemy = enemy;
+
+        var contentSize = this.getContentSize();
+        this.body = new cp.Body(1, cp.momentForCircle(1, 0, contentSize.width / 2, cp.v(0, 0)));
+        this.localPos = cc.pAdd(this.cpos, this.offset);
+        this.body.v_limit = 0;
+        this.space.addBody(this.body);
+        this.shape = new cp.CircleShape(this.body, contentSize.width / 2, cp.v(0, 0));
+        this.shape.layers = 0;
+        this.shape.sprite = this;
+        this.space.addShape(this.shape);
+        this.setBody(this.body);
+        this.visible = false;
+
+        this.scheduleUpdate();
+    },
+
+    update: function(dt) {
+        if (this.state === 2) {
+            this.body.p = cc.pAdd(this.localPos, this.enemy.body.p);
+        }
+    },
+
+    attach: function() {
+        this.opacity = 0;
+        this.body.p = cc.pAdd(this.localPos, this.enemy.body.p);
+        var targetPos = this.body.p;
+        this.body.p = cc.pAdd(this.body.p, cc.p(0, 10)); // 10px up
+        this.runAction(cc.fadeIn(1));
+        this.runAction(cc.moveTo(1, targetPos));
+        this.visible = true;
+        this.state = 1;
+        this.scheduleOnce(function() {
+                if (this.state === 1) this.state = 2;
+            }, 1);
+    },
+
+    flip: function() {
+        this.localPos = cc.p(this.cpos.x - this.offset.x, this.cpos.y + this.offset.y);
+    },
+
+    detach: function() {
+        this.body.v_limit = Infinity;
+        var impulse = cp.v(-150, this.enemy.body.vy);
+        this.body.applyImpulse(impulse, cp.v(0, 0));
+        this.shape.setLayers(LayerMask.projectileFloor);
+        this.shape.group = LayerGroup.projectile;
+        this.state = 3;
+    },
+});
+
 const EnemyState = {
     Walk: 0,
-    Hurt: 1,
-    Dying: 2,
-    Dead: 3,
-    Stand: 4,
-    Order: 5,
+    PreHurt: 1,
+    Hurt: 2,
+    Dying: 3,
+    Dead: 4,
+    Stand: 5,
+    Order: 6,
 };
 
 var Enemy = cc.PhysicsSprite.extend({
     body: null,
     shape: null,
     space: null,
-    rollSprite: null,
+    roll: null,
     walkAction: null,
     hurtAction: null,
     deathAction: null,
@@ -82,9 +154,7 @@ var Enemy = cc.PhysicsSprite.extend({
         this.space = space;
         this.attr({anchorX:0, anchorY:0});
 
-        this.rollSprite = new cc.Sprite(res.shop_roll_png);
-        this.rollSprite.attr({x:10, y:10, visible:false});
-        this.addChild(this.rollSprite);
+        this.roll = new Roll(this, cc.p(16, 0), cc.p(-6, 10), this.space);
 
         var walkFrames = [];
         var hurtFrames = [];
@@ -119,7 +189,7 @@ var Enemy = cc.PhysicsSprite.extend({
         this.space.addBody(this.body);
         this.shape = new cp.BoxShape2(this.body, cp.bb(contentSize.width / 4, 0, contentSize.width * 3 / 4, contentSize.height - 4));
         this.shape.setCollisionType(SpriteTag.enemy);
-        this.shape.layers = LayerMask.enemy | LayerMask.roll1;
+        this.shape.layers = LayerMask.enemyProjectile | LayerMask.enemyFloor | LayerMask.enemyWall;
         this.shape.sprite = this;
         this.shape.e = 0.5; // elasticity
         this.shape.u = 0.4; // friction
@@ -135,8 +205,10 @@ var Enemy = cc.PhysicsSprite.extend({
         this.stopAllActions();
         this.runAction(this.hurtAction);
         this.shape.setFriction(0.6);
+        this.state = EnemyState.PreHurt;
         this.scheduleOnce(function(){this.state = EnemyState.Hurt;}, 0.2);
-        this.shape.setLayers(LayerMask.floor);
+        this.shape.setLayers(LayerMask.enemyFloor | LayerMask.enemyWall);
+        this.roll.detach();
     },
 
     die: function() {
@@ -166,32 +238,31 @@ var Enemy = cc.PhysicsSprite.extend({
             this.runAction(this.walkAction);
         } else if (this.state === EnemyState.Stand && this.body.p.x < 72 && !this.flippedX) {
             this.state = EnemyState.Order;
-            this.rollSprite.attr({visible: true, y: 20, opacity: 0});
-            this.rollSprite.runAction(cc.fadeIn(1));
-            this.rollSprite.runAction(cc.moveTo(1, cc.p(10, 10)));
+            this.roll.attach();
             this.scheduleOnce(function() {
                     // turn around
                     this.flippedX = true;
-                    this.rollSprite.x = 26;
-                    this.shape.layers = LayerMask.roll2;
+                    this.roll.flip();
+                    this.shape.setLayers(LayerMask.enemyProjectile | LayerMask.enemyFloor)
                     this.body.resetForces();
                     this.body.applyForce(cp.v(500, 0), cp.v(0, 0));
                     this.body.v_limit = 40;
                     this.state = EnemyState.Walk;
                     this.stopAllActions();
                     this.runAction(this.walkAction);
-                    this.setLocalZOrder(2);
+                    this.setLocalZOrder(2); // render in front
+                    this.roll.setLocalZOrder(2);
                 }, 1);
         }
     },
 });
 
-var Roll = cc.PhysicsSprite.extend({
+var Projectile = cc.PhysicsSprite.extend({
     body:null,
     shape:null,
     space:null,
-    ctor: function(sprite, space) {
-        this._super(sprite);
+    ctor: function(space) {
+        this._super(res.shop_roll_png);
         this.space = space;
 
         var contentSize = this.getContentSize();
@@ -201,9 +272,10 @@ var Roll = cc.PhysicsSprite.extend({
         this.shape = new cp.CircleShape(this.body, contentSize.width / 2, cp.v(0, 0));
         this.shape.e = 0.5; // elasticity
         this.shape.u = 0.8; // friction
-        this.shape.setCollisionType(SpriteTag.roll);
+        this.shape.setCollisionType(SpriteTag.projectile);
         this.space.addShape(this.shape);
-        this.shape.layers = LayerMask.roll1 | LayerMask.roll2;
+        this.shape.layers = LayerMask.projectileFloor | LayerMask.projectileWall | LayerMask.enemyProjectile;
+        this.shape.group = LayerGroup.projectile;
         this.setBody(this.body);
     },
 
@@ -235,7 +307,7 @@ var AnimationLayer = cc.Layer.extend({
     space: null,
     time: 0,
     timeToSpawn: 2,
-    rolls: [],
+    projectiles: [],
     enemies: [],
 
     ctor: function(space) {
@@ -254,23 +326,23 @@ var AnimationLayer = cc.Layer.extend({
 			onTouchBegan: function (touch, event) { 
                 var target = event.getCurrentTarget();
                 var bear = target.bear;
-                target.clearInactiveRolls();
-                if (target.rolls.length === 0) {
-                    var roll = new Roll(res.shop_roll_png, target.space);
-                    var rollb = roll.body;
-                    target.addChild(roll, 5);
-                    target.rolls.push(roll);
-                    rollb.p = cc.p(48, -16);
-                    rollb.vx = 0;
-                    rollb.vy = 0;
-                    rollb.w = -5;
-                    rollb.resetForces();
-                    rollb.applyImpulse(cp.v(0, 350), cp.v(0, 0));
+                target.clearInactiveProjectiles();
+                if (target.projectiles.length === 0) {
+                    var projectile = new Projectile(target.space);
+                    var projectileb = projectile.body;
+                    target.addChild(projectile, 5);
+                    target.projectiles.push(projectile);
+                    projectileb.p = cc.p(48, -16);
+                    projectileb.vx = 0;
+                    projectileb.vy = 0;
+                    projectileb.w = -5;
+                    projectileb.resetForces();
+                    projectileb.applyImpulse(cp.v(0, 350), cp.v(0, 0));
                     bear.state = 1;
                 } else if (bear.state === 1) {
-                    var roll = target.rolls[target.rolls.length - 1];
+                    var projectile = target.projectiles[target.projectiles.length - 1];
                     bear.hit();
-                    if (roll.hit()) {
+                    if (projectile.hit()) {
                         bear.state = 0;
                     } else {
                         bear.state = 2;
@@ -281,11 +353,11 @@ var AnimationLayer = cc.Layer.extend({
 		cc.eventManager.addListener(touchlistener, this);
     },
 
-    clearInactiveRolls: function() {
-        for (var i = this.rolls.length - 1; i >= 0; i--) {
-            if (this.rolls[i].body.p.y < 0) {
-                this.removeChild(this.rolls[i]);
-                this.rolls.splice(i, 1);
+    clearInactiveProjectiles: function() {
+        for (var i = this.projectiles.length - 1; i >= 0; i--) {
+            if (this.projectiles[i].body.p.y < 0) {
+                this.removeChild(this.projectiles[i]);
+                this.projectiles.splice(i, 1);
             }
         }
     },
@@ -298,6 +370,7 @@ var AnimationLayer = cc.Layer.extend({
             var enemy = new Enemy(this.space);
             this.enemies.push(enemy);
             this.addChild(enemy, 1);
+            this.addChild(enemy.roll, 1);
         }
     },
 });
@@ -305,11 +378,13 @@ var AnimationLayer = cc.Layer.extend({
 var StoreScene = cc.Scene.extend({
     space: null,
     animLayer: null,
+    physicsTime: 0,
 
     onEnter:function() {
         this._super();
         cc.spriteFrameCache.addSpriteFrames(res.bear_plist);
         cc.spriteFrameCache.addSpriteFrames(res.enemy0_plist);
+        cc.spriteFrameCache.addSpriteFrames(res.egg_plist);
         this.initPhysics();
 
         this.addChild(new BackgroundLayer());
@@ -324,16 +399,17 @@ var StoreScene = cc.Scene.extend({
         this.scheduleUpdate();
     },
 
-    collisionRollEnemyBegin: function(arbiter, space) {
+    collisionProjectileEnemyBegin: function(arbiter, space) {
         var shapes = arbiter.getShapes();
-        var roll = shapes[0];
+        var projectile = shapes[0];
         var enemy = shapes[1];
-        var speed = cp.v.lengthsq2(roll.body.vx, roll.body.vy);
+        if (!enemy.sprite.isAlive()) return false;
+        var speed = cp.v.lengthsq2(projectile.body.vx, projectile.body.vy);
         if (speed > 1000) {
             enemy.body.resetForces();
             enemy.body.v_limit = Infinity;
             enemy.body.applyImpulse(cp.v(0, 300), cp.v(0, 0));
-            roll.body.applyImpulse(cp.v(0, 200), cp.v(0, 0));
+            projectile.body.applyImpulse(cp.v(0, 200), cp.v(0, 0));
             enemy.sprite.hit();
             return true;
         } else {
@@ -344,21 +420,21 @@ var StoreScene = cc.Scene.extend({
 
     collisionEnemyFloorPostSolve: function(arbiter, space) {
         var enemy = arbiter.getShapes()[0];
-        if (enemy.sprite.state == 1) {
+        if (enemy.sprite.state == EnemyState.Hurt) {
             enemy.sprite.die();
         }
         return true;
     },
 
-    collisionRollFloorBegin: function(arbiter, space) {
-        var roll = arbiter.getShapes()[0];
-        roll.layers = 0;
+    collisionProjectileFloorBegin: function(arbiter, space) {
+        var projectile = arbiter.getShapes()[0];
+        projectile.layers = 0;
         return true;
     },
 
-    collisionEnemyEnemyBegin: function(arbiter, space) {
+    collisionEnemyEnemyPreSolve: function(arbiter, space) {
         var shapes = arbiter.getShapes();
-        if (!shapes[0].sprite.isAlive() || !shapes[1].sprite.isAlive()) return false;
+        if (!shapes[0].sprite.isAlive() || !shapes[1].sprite.isAlive() || shapes[0].sprite.flippedX || shapes[1].sprite.flippedX) return false;
         return true;
     },
 
@@ -382,19 +458,24 @@ var StoreScene = cc.Scene.extend({
             walls[i].e = 0.8;
             walls[i].u = 0.4;
             walls[i].setCollisionType(SpriteTag.wall);
+            walls[i].layers = LayerMask.projectileWall | LayerMask.enemyWall;
             this.space.addStaticShape(walls[i]);
         }
         wallFloor.setCollisionType(SpriteTag.floor);
+        wallFloor.layers = LayerMask.projectileFloor | LayerMask.enemyFloor;
 
-        this.space.addCollisionHandler(SpriteTag.roll, SpriteTag.enemy, this.collisionRollEnemyBegin.bind(this), null, null, null);
+        this.space.addCollisionHandler(SpriteTag.projectile, SpriteTag.enemy, this.collisionProjectileEnemyBegin.bind(this), null, null, null);
         this.space.addCollisionHandler(SpriteTag.enemy, SpriteTag.floor, null, null, this.collisionEnemyFloorPostSolve.bind(this), null);
-        this.space.addCollisionHandler(SpriteTag.roll, SpriteTag.floor, this.collisionRollFloorBegin.bind(this), null, null, null);
-        this.space.addCollisionHandler(SpriteTag.enemy, SpriteTag.enemy, this.collisionEnemyEnemyBegin.bind(this), null, null, null);
+        this.space.addCollisionHandler(SpriteTag.projectile, SpriteTag.floor, this.collisionProjectileFloorBegin.bind(this), null, null, null);
+        this.space.addCollisionHandler(SpriteTag.enemy, SpriteTag.enemy, null, this.collisionEnemyEnemyPreSolve.bind(this), null, null);
     },
 
     update: function(dt) {
-        for (var i = 0; i < 8; i++) {
-            this.space.step(dt/8)
+        this.physicsTime += dt;
+        const physicsStep = 1/120;
+        while (this.physicsTime > 0) {
+            this.space.step(physicsStep);
+            this.physicsTime -= physicsStep;
         }
         this.animLayer.update(dt);
     }
