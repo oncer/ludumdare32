@@ -19,6 +19,8 @@ var res = {
 	bear_plist : "res/bear.plist",
 	enemy_png : "res/enemy.png",
 	enemy_plist : "res/enemy.plist",
+	coin_png : "res/coin.png",
+	coin_plist : "res/coin.plist",
 	egg_png : "res/egg.png",
 	egg_plist : "res/egg.plist",
 	title_bg_png : "res/title_bg.png",

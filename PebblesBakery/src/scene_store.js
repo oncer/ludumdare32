@@ -182,6 +182,38 @@ var Roll = cc.PhysicsSprite.extend({
     },
 });
 
+var Coin = cc.PhysicsSprite.extend({
+    ctor: function(space, pos) {
+        var type = Math.floor(Math.random() * 3);
+        this._super("#coin" + type + ".png");
+        this.space = space;
+
+        var contentSize = this.getContentSize();
+        this.body = new cp.Body(1, cp.momentForCircle(1, 0, contentSize.width / 2, cp.v(0, 0)));
+        this.body.p = pos;
+        this.space.addBody(this.body);
+        this.shape = new cp.CircleShape(this.body, contentSize.width / 2, cp.v(0, 0));
+        this.space.addShape(this.shape);
+        this.shape.group = LayerGroup.projectile;
+        this.shape.sprite = this;
+        this.setBody(this.body);
+
+        this.shape.group = LayerGroup.projectile;
+        this.shape.layers = LayerMask.projectileFloor;
+        this.body.applyImpulse(cp.v(-Math.random() * 50 - 100, Math.random() * 50 + 200), cp.v(0, 0));
+        this.shape.e = 1.0;
+        this.shape.u = 0.4;
+
+        this.scheduleUpdate();
+    },
+
+    update: function(dt) {
+        if (this.body.p.x < 0) {
+            ++g_score;
+        }
+    },
+});
+
 const EnemyState = {
     Walk: 0,
     PreHurt: 1,
@@ -197,6 +229,7 @@ const EnemyState = {
 var Enemy = cc.PhysicsSprite.extend({
     body: null,
     shape: null,
+    layer: null,
     space: null,
     roll: null,
     bubble: null,
@@ -206,9 +239,10 @@ var Enemy = cc.PhysicsSprite.extend({
     standAction: null,
     screamSounds: null,
     state: 0,
-    ctor: function(space) {
+    ctor: function(layer) {
         this._super("#enemy0_0.png");
-        this.space = space;
+        this.layer = layer;
+        this.space = this.layer.space;
         this.attr({anchorX:0, anchorY:0});
 
         this.roll = new Roll(this, cc.p(16, 0), cc.p(-6, 9), this.space);
@@ -270,7 +304,7 @@ var Enemy = cc.PhysicsSprite.extend({
         var contentSize = this.getContentSize();
         this.body = new cp.Body(1, Infinity);
         this.body.p = cc.p(322, 20);
-        this.body.v_limit = 20;
+        this.body.v_limit = 40;
         this.space.addBody(this.body);
         this.shape = new cp.BoxShape2(this.body, cp.bb(contentSize.width / 4, 0, contentSize.width * 3 / 4, contentSize.height - 4));
         this.shape.setCollisionType(SpriteTag.enemy);
@@ -296,9 +330,12 @@ var Enemy = cc.PhysicsSprite.extend({
         this.runAction(this.hurtAction);
         this.shape.setFriction(0.6);
         this.state = EnemyState.PreHurt;
-        this.scheduleOnce(function(){this.state = EnemyState.Hurt;}, 0.2);
         this.shape.setLayers(LayerMask.enemyFloor | LayerMask.enemyWall);
         this.roll.detach();
+        this.scheduleOnce(function() {
+            this.state = EnemyState.Hurt;
+            this.spawnCoins = true;
+        }, 0.1);
     },
 
     die: function() {
@@ -309,8 +346,8 @@ var Enemy = cc.PhysicsSprite.extend({
                 this.shape.layers = 0;
                 this.scheduleOnce(function(){
                     this.state = EnemyState.Dead;
-                }, 1.0);
-            }, 2.0);
+                }, 1);
+            }, 2);
     },
 
     isAlive: function() {
@@ -318,6 +355,12 @@ var Enemy = cc.PhysicsSprite.extend({
     },
 
     update: function(dt) {
+        if (this.spawnCoins) {
+            this.spawnCoins = false;
+            for (var i = 0; i < Math.random() * 3; i++) {
+                this.layer.spawnCoin(cc.pAdd(this.body.p, cc.p(16, 16)));
+            }
+        }
         if (this.state === EnemyState.Walk && Math.abs(this.body.vx) < 3) {
             this.state = EnemyState.Stand;
             this.stopAllActions();
@@ -338,7 +381,7 @@ var Enemy = cc.PhysicsSprite.extend({
                     this.shape.setLayers(LayerMask.enemyProjectile | LayerMask.enemyFloor)
                     this.body.resetForces();
                     this.body.applyForce(cp.v(500, 0), cp.v(0, 0));
-                    this.body.v_limit = 40;
+                    this.body.v_limit = 60;
                     this.state = EnemyState.Walk;
                     this.stopAllActions();
                     this.runAction(this.walkAction);
@@ -367,6 +410,7 @@ const ProjectileState = {
     Pitch: 2,
     Fly: 3,
     Break: 4,
+    Dead: 5, // safe to remove
 };
 
 var Projectile = cc.PhysicsSprite.extend({
@@ -434,7 +478,7 @@ var Projectile = cc.PhysicsSprite.extend({
         this.body.v_limit = Infinity;
         this.body.w_limit = Infinity;
         this.body.resetForces();
-        this.body.applyImpulse(cp.v(0, 350), cp.v(0, 0));
+        this.body.applyImpulse(cp.v(0, 270), cp.v(0, 0));
         this.state = ProjectileState.Pitch;
     },
 
@@ -448,10 +492,10 @@ var Projectile = cc.PhysicsSprite.extend({
             
             if (this.body.p.y > 58) {
                 this.body.p.y = 64;
-                this.body.applyImpulse(cp.v(600, 250), cp.v(0, 0));
+                this.body.applyImpulse(cp.v(250, 250), cp.v(0, 0));
             } else if (this.body.p.y > 46) {
                 this.body.p.y = 52;
-                this.body.applyImpulse(cp.v(250, 250), cp.v(0, 0));
+                this.body.applyImpulse(cp.v(180, 250), cp.v(0, 0));
             } else {
                 this.body.p.y = 40;
                 this.body.applyImpulse(cp.v(70, 300), cp.v(0, 0));
@@ -474,7 +518,7 @@ var Projectile = cc.PhysicsSprite.extend({
         if (this.state === ProjectileState.Break) return;
         this.stopAllActions();
         this.runAction(this.breakAction);
-        this.scheduleOnce(function(){ this.reset(); }, 0.3);
+        this.scheduleOnce(function(){ this.state = ProjectileState.Dead }, 0.3);
         this.body.vy = 0;
         this.body.w = 0;
         this.body.v_limit = 0;
@@ -493,7 +537,6 @@ var AnimationLayer = cc.Layer.extend({
     time: 0,
     timeToSpawn: 2,
     projectile: null,
-    enemies: [],
 
     ctor: function(space) {
         this._super();
@@ -505,10 +548,10 @@ var AnimationLayer = cc.Layer.extend({
         this.bear = new Bear();
         this.addChild(this.bear);
 
-        this.projectile = new Projectile(this.space);
-        this.addChild(this.projectile, 5);
+        this.projectiles = [];
 
         this.enemies = [];
+        this.coins = [];
 
 		var touchlistener = cc.EventListener.create({
 			event: cc.EventListener.TOUCH_ONE_BY_ONE,
@@ -516,11 +559,14 @@ var AnimationLayer = cc.Layer.extend({
 			onTouchBegan: function (touch, event) { 
                 var target = event.getCurrentTarget();
                 var bear = target.bear;
-                if (target.projectile.state === ProjectileState.Idle && bear.state === 0) {
-                    target.projectile.pitch();
-                } else if (target.projectile.state === ProjectileState.Pitch && bear.state === 0) {
-                    bear.hit();
-                    target.projectile.hit();
+                if (target.projectiles.length > 0) {
+                    var projectile = target.projectiles[target.projectiles.length - 1];
+                    if (projectile.state === ProjectileState.Idle && bear.state === 0) {
+                        projectile.pitch();
+                    } else if (projectile.state === ProjectileState.Pitch && bear.state === 0) {
+                        bear.hit();
+                        projectile.hit();
+                    }
                 }
 			}
 		});
@@ -532,15 +578,24 @@ var AnimationLayer = cc.Layer.extend({
         this.timeToSpawn -= dt;
         if (this.timeToSpawn <= 0) {
             this.timeToSpawn += Math.random() * 10;
-            var enemy = new Enemy(this.space);
+            var enemy = new Enemy(this);
             this.enemies.push(enemy);
             this.addChild(enemy, 1);
             this.addChild(enemy.roll, 1);
         }
 
-        if (this.projectile.body.p.y < 0 && this.projectile.state !== ProjectileState.Reset &&
-            this.projectile.state != ProjectileState.Idle) {
-            this.projectile.reset();
+        for (var i = this.projectiles.length - 1; i >= 0; i--) {
+            if ((this.projectiles[i].body.p.y < 0 && this.projectiles[i].state !== ProjectileState.Reset) || this.projectiles[i].state === ProjectileState.Dead) {
+                this.removeChild(this.projectiles[i]);
+                this.projectiles.splice(i, 1);
+            }
+        }
+
+        if (this.projectiles.length == 0 ||
+                this.projectiles[this.projectiles.length - 1].state === ProjectileState.Fly) {
+            var projectile = new Projectile(this.space);
+            this.projectiles.push(projectile);
+            this.addChild(projectile);
         }
 
         for (var i = this.enemies.length - 1; i >= 0; i--) {
@@ -552,6 +607,12 @@ var AnimationLayer = cc.Layer.extend({
                     }, 5);
             }
         }
+    },
+
+    spawnCoin: function(pos) {
+        var coin = new Coin(this.space, pos);
+        this.coins.push(coin);
+        this.addChild(coin);
     },
 });
 
@@ -568,6 +629,7 @@ var StoreScene = cc.Scene.extend({
         cc.spriteFrameCache.addSpriteFrames(res.bear_plist);
         cc.spriteFrameCache.addSpriteFrames(res.enemy_plist);
         cc.spriteFrameCache.addSpriteFrames(res.egg_plist);
+        cc.spriteFrameCache.addSpriteFrames(res.coin_plist);
         this.initPhysics();
 
         this.addChild(new BackgroundLayer());
@@ -606,7 +668,7 @@ var StoreScene = cc.Scene.extend({
 
     collisionEnemyFloorPostSolve: function(arbiter, space) {
         var enemy = arbiter.getShapes()[0];
-        if (enemy.sprite.state == EnemyState.Hurt) {
+        if (enemy.sprite.state === EnemyState.Hurt) {
             enemy.sprite.die();
         }
         return true;
