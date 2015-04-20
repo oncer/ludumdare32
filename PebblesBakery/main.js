@@ -30,7 +30,7 @@ cc.game.onStart = function(){
     cc.view.resizeWithBrowserSize(false);
     //load resources
     cc.LoaderScene.preload(g_resources, function () {
-        cc.director.runScene(new CalendarScene());
+        cc.director.runScene(new BakeryScene());
     }, this);
 
     if (cc._renderContext instanceof WebGLRenderingContext) {
