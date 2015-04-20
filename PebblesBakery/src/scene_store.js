@@ -144,6 +144,7 @@ var Roll = cc.PhysicsSprite.extend({
     },
 
     attach: function() {
+		cc.audioEngine.playEffect(sfx.buy_roll, false);
         this.opacity = 0;
         this.body.p = cc.pAdd(this.localPos, this.enemy.body.p);
         var targetPos = this.body.p;
@@ -406,6 +407,7 @@ var Projectile = cc.PhysicsSprite.extend({
 
     hit: function() {
         if (this.body.p.y < 70 && this.body.p.y > 34) {
+		    cc.audioEngine.playEffect(sfx.hit_egg, false);
             var diffy = this.body.p.y - 40;
             this.body.vx = 0;
             this.body.vy = 0;
@@ -425,6 +427,7 @@ var Projectile = cc.PhysicsSprite.extend({
             this.shape.layers = LayerMask.projectileFloor | LayerMask.projectileWall | LayerMask.enemyProjectile;
             return true;
         }
+		cc.audioEngine.playEffect(sfx.miss_egg, false);
         return false;
     },
     
@@ -434,6 +437,7 @@ var Projectile = cc.PhysicsSprite.extend({
     },
 
     break_: function() {
+		cc.audioEngine.playEffect(sfx.egg_splash, false);
         if (this.state === ProjectileState.Break) return;
         this.stopAllActions();
         this.runAction(this.breakAction);

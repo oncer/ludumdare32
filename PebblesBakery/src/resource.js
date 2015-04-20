@@ -35,7 +35,11 @@ var sfx = {
 	bakery_good : "res/sfx/bakery_oven_good.ogg",
 	bakery_burn : "res/sfx/bakery_oven_burn.ogg",
 	bakery_timeup : "res/sfx/bakery_timeup.ogg",
-	cal_tear : "res//sfx/tear_paper.ogg",
+	cal_tear : "res/sfx/tear_paper.ogg",
+	buy_roll : "res/sfx/buy_roll.ogg",
+	hit_egg : "res/sfx/hit_egg.ogg",
+	miss_egg : "res/sfx/miss_egg.ogg",
+	egg_splash : "res/sfx/egg_splash.ogg",
 };
 
 var g_resources = [];
