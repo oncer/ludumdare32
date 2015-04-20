@@ -62,7 +62,7 @@ var BakeryGameLayer = cc.Layer.extend({
 		this.rollicon.setPosition(cc.p(284,164));
 		this.rollicon.setLocalZOrder(6);
 		this.addChild(this.rollicon);
-		this.rolltext = new cc.LabelBMFont("0", res.bmfont);
+		this.rolltext = new cc.LabelBMFont(g_rollCount.toString(), res.bmfont);
 		this.rolltext.setPosition(cc.p(304,163));
 		this.rolltext.setLocalZOrder(6);
 		this.addChild(this.rolltext);
