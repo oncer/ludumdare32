@@ -137,8 +137,6 @@ var CalendarGameLayer = cc.Layer.extend({
 				this.state = CSTATES.DROP;
 				var p = this.upper.getPosition();
 				this.upper.runAction(new cc.MoveTo(3,cc.p(p.x, p.y-416)));
-				//TODO better anim
-				//TODO schedule next scene
 				this.scheduleOnce(this.nextScene, 1.5);
 			}
 		} else if (this.state === CSTATES.DROP) {
