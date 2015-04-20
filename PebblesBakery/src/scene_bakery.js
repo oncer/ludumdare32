@@ -46,8 +46,9 @@ var BSTATES =
 var BakeryGameLayer = cc.Layer.extend({
 	rollicon:null,
 	rolltext:null,
-	timeleft:20,
+	timeicon:null,
 	timetext:null,
+	timeleft:20,
 	gameover:false,
 	lerptime:0,
 	state:BSTATES.IDLE,
@@ -83,8 +84,12 @@ var BakeryGameLayer = cc.Layer.extend({
 		this.rolltext.setPosition(cc.p(304,163));
 		this.rolltext.setLocalZOrder(6);
 		this.addChild(this.rolltext);
+		this.timeicon = new cc.Sprite(res.icon_time_png);
+		this.timeicon.setPosition(cc.p(140,155));
+		this.timeicon.setLocalZOrder(6);
+		this.addChild(this.timeicon);
 		this.timetext = new cc.LabelBMFont(""+this.timeleft, res.bmfont32, -1, cc.TEXT_ALIGNMENT_CENTER);
-		this.timetext.setPosition(cc.p(160,155));
+		this.timetext.setPosition(cc.p(170,154));
 		this.timetext.setLocalZOrder(7);
 		this.addChild(this.timetext);
 		
@@ -126,9 +131,11 @@ var BakeryGameLayer = cc.Layer.extend({
 		this.sitting_dough.setPosition(this.on_desk_pos);// + cc.p(48,48));
 		this.sitting_dough.runAction(kneadanim);
 		this.sitting_dough.pause();
+		this.sitting_dough.setLocalZOrder(2);
 		this.sitting_roll = new cc.Sprite(res.bakery_roll_png);
 		this.sitting_roll.setPosition(this.on_desk_pos);// + cc.p(48,48));
 		this.sitting_roll.setTextureRect(cc.rect(0,0,48,48));
+		this.sitting_roll.setLocalZOrder(2);
 		this.addChild(this.sitting_dough);
 		this.addChild(this.sitting_roll); 
 		
@@ -182,14 +189,15 @@ var BakeryGameLayer = cc.Layer.extend({
 	update:function(dt)
 	{
 
-		this.oven.updateRolls(dt);
 		if (!this.gameover) {
+			this.oven.updateRolls(dt);
 			this.timeleft -= dt;
 			this.timetext.setString(Math.ceil(this.timeleft));
 			if(this.timeleft <= 0) {
 				
 				this.gameover = true;
 				this.timetext.setString("TIME UP");
+				this.timeicon.setVisible(false);
 				cc.audioEngine.stopMusic();
 				cc.audioEngine.playEffect(sfx.bakery_timeup, false);
                 cc.director.runScene(new cc.TransitionFade(1.0, new StoreScene(), cc.color(0, 0, 0, 0)));
