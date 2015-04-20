@@ -154,7 +154,7 @@ var CalendarGameLayer = cc.Layer.extend({
 		return (cc.rectContainsPoint(rect, touchStartPos));  
 	},
 	nextScene:function() {
-		console.debug("OPEN NEW SCENE PLOX");
+		cc.director.runScene(new BakeryScene());
 	}
 	
 });
