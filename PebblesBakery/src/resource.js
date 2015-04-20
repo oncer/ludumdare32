@@ -21,6 +21,9 @@ var res = {
 	egg_png : "res/egg.png",
 	egg_plist : "res/egg.plist",
 	title_bg_png : "res/title_bg.png",
+	cal_bg : "res/cal_bg.png",
+	cal_lower : "res/cal_lower.png",
+	cal_upper : "res/cal_upper.png",
 };
 
 var sfx = {
