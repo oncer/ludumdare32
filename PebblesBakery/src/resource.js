@@ -23,7 +23,17 @@ var res = {
 	title_bg_png : "res/title_bg.png",
 };
 
+var sfx = {
+	bakery_grab : "res/sfx/bakery_grab_dough.ogg",
+	bakery_bad : "res/sfx/bakery_oven_raw.ogg",
+	bakery_good : "res/sfx/bakery_oven_good.ogg",
+	bakery_burn : "res/sfx/bakery_oven_burn.ogg",
+};
+
 var g_resources = [];
 for (var i in res) {
     g_resources.push(res[i]);
+}
+for (var i in sfx) {
+	g_resources.push(sfx[i]);
 }
