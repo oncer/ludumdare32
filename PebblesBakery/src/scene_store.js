@@ -1,4 +1,4 @@
-const LayerMask = {
+var LayerMask = {
     enemyProjectile: 1,
     enemyWall: 2,
     enemyFloor: 4,
@@ -6,11 +6,11 @@ const LayerMask = {
     projectileWall: 16,
 };
 
-const LayerGroup = {
+var LayerGroup = {
     projectile: 1,
 };
 
-const SpriteTag = {
+var SpriteTag = {
     wall: 0,
     enemy: 1,
     projectile: 2,
@@ -18,10 +18,6 @@ const SpriteTag = {
 };
 
 var BackgroundLayer = cc.Layer.extend({
-    sprite:null,
-	rollicon:null,
-	rolltext:null,
-    rollcount:0,
     ctor: function() {
         this._super();
         this.sprite = new cc.Sprite(res.shop_bg_png);
@@ -34,13 +30,24 @@ var BackgroundLayer = cc.Layer.extend({
 		this.rolltext = new cc.LabelBMFont(this.rollcount.toString(), res.bmfont);
 		this.rolltext.setPosition(cc.p(44,163));
 		this.addChild(this.rolltext);
+		this.moneyicon = new cc.Sprite(res.icon_money_png);
+		this.moneyicon.setPosition(cc.p(304,164));
+		this.addChild(this.moneyicon);
+        this.score = g_score;
+		this.moneytext = new cc.LabelBMFont(g_score.toString(), res.bmfont);
+		this.moneytext.setPosition(cc.p(278,163));
+		this.addChild(this.moneytext);
         this.scheduleUpdate();
     },
 
     update: function() {
         if (g_rollCount != this.rollcount) {
             this.rollcount = g_rollCount;
-            this.rolltext.setString(this.rollcount);
+            this.rolltext.setString(this.rollcount.toString());
+        }
+        if (g_score != this.score) {
+            this.score = g_score;
+            this.moneytext.setString(this.score.toString());
         }
     },
 
@@ -101,6 +108,11 @@ var Bear = cc.Sprite.extend({
         if (this.state !== -1) {
             this.stopAllActions();
             this.runAction(this.hurtAction);
+            cc.audioEngine.stopMusic();
+            cc.audioEngine.playEffect(sfx.gameover, false);
+            this.scheduleOnce(function(){
+                    cc.director.runScene(new cc.TransitionFade(1.0, new CalendarScene(), cc.color(0, 0, 0, 0)));
+                }, 5);
             this.state = -1;
         }
     },
@@ -205,16 +217,19 @@ var Coin = cc.PhysicsSprite.extend({
         this.shape.u = 0.4;
 
         this.scheduleUpdate();
+
+        this.state = 0;
     },
 
     update: function(dt) {
-        if (this.body.p.x < 0) {
+        if (this.body.p.x < 0 && this.state === 0) {
             ++g_score;
+            this.state = 1;
         }
     },
 });
 
-const EnemyState = {
+var EnemyState = {
     Walk: 0,
     PreHurt: 1,
     Hurt: 2,
@@ -250,11 +265,14 @@ var Enemy = cc.PhysicsSprite.extend({
         this.bubble.attr({visible:false});
         this.addChild(this.bubble);
 
-        var type = Math.floor(Math.random() * 5);
+        this.spawnCoins = 0;
+
+        var type = Math.floor(Math.random() * 6);
         switch (type) {
             case 0: // old man
             case 1: // young man
             case 2: // old man
+            case 5: // fat man
                 this.screamSounds = [
                     sfx.scream_man1,
                     sfx.scream_man2,
@@ -334,7 +352,7 @@ var Enemy = cc.PhysicsSprite.extend({
         this.roll.detach();
         this.scheduleOnce(function() {
             this.state = EnemyState.Hurt;
-            this.spawnCoins = true;
+            this.spawnCoins = Math.floor(Math.random() * 4);
         }, 0.1);
     },
 
@@ -355,12 +373,6 @@ var Enemy = cc.PhysicsSprite.extend({
     },
 
     update: function(dt) {
-        if (this.spawnCoins) {
-            this.spawnCoins = false;
-            for (var i = 0; i < Math.random() * 3; i++) {
-                this.layer.spawnCoin(cc.pAdd(this.body.p, cc.p(16, 16)));
-            }
-        }
         if (this.state === EnemyState.Walk && Math.abs(this.body.vx) < 3) {
             this.state = EnemyState.Stand;
             this.stopAllActions();
@@ -374,6 +386,7 @@ var Enemy = cc.PhysicsSprite.extend({
                 this.bubble.runAction(cc.fadeOut(0.25));
                 this.state = EnemyState.Order;
                 this.roll.attach();
+                this.spawnCoins += 10;
                 this.scheduleOnce(function() {
                     // turn around
                     this.flippedX = true;
@@ -401,10 +414,14 @@ var Enemy = cc.PhysicsSprite.extend({
                     }, 1);
             }
         }
+        while (this.spawnCoins > 0) {
+            this.spawnCoins--;
+            this.layer.spawnCoin(cc.pAdd(this.body.p, cc.p(16, 16)));
+        }
     },
 });
 
-const ProjectileState = {
+var ProjectileState = {
     Reset: 0,
     Idle: 1,
     Pitch: 2,
@@ -492,13 +509,13 @@ var Projectile = cc.PhysicsSprite.extend({
             
             if (this.body.p.y > 58) {
                 this.body.p.y = 64;
-                this.body.applyImpulse(cp.v(250, 250), cp.v(0, 0));
+                this.body.applyImpulse(cp.v(280, 210), cp.v(0, 0));
             } else if (this.body.p.y > 46) {
                 this.body.p.y = 52;
                 this.body.applyImpulse(cp.v(180, 250), cp.v(0, 0));
             } else {
                 this.body.p.y = 40;
-                this.body.applyImpulse(cp.v(70, 300), cp.v(0, 0));
+                this.body.applyImpulse(cp.v(60, 220), cp.v(0, 0));
             }
             this.state = ProjectileState.Fly;
             this.shape.layers = LayerMask.projectileFloor | LayerMask.projectileWall | LayerMask.enemyProjectile;
@@ -584,6 +601,13 @@ var AnimationLayer = cc.Layer.extend({
             this.addChild(enemy.roll, 1);
         }
 
+        for (var i = this.coins.length - 1; i >= 0; i--) {
+            if (this.coins[i].state === 1) {
+                this.removeChild(this.coins[i]);
+                this.coins.splice(i, 1);
+            }
+        }
+
         for (var i = this.projectiles.length - 1; i >= 0; i--) {
             if ((this.projectiles[i].body.p.y < 0 && this.projectiles[i].state !== ProjectileState.Reset) || this.projectiles[i].state === ProjectileState.Dead) {
                 this.removeChild(this.projectiles[i]);
@@ -600,11 +624,7 @@ var AnimationLayer = cc.Layer.extend({
 
         for (var i = this.enemies.length - 1; i >= 0; i--) {
             if (this.enemies[i].state === EnemyState.Unsatisfied) {
-                cc.audioEngine.stopMusic();
                 this.bear.cry();
-                this.scheduleOnce(function(){
-                        cc.director.runScene(new cc.TransitionFade(1.0, new CalendarScene(), cc.color(0, 0, 0, 0)));
-                    }, 5);
             }
         }
     },
@@ -729,7 +749,7 @@ var StoreScene = cc.Scene.extend({
 
     update: function(dt) {
         this.physicsTime += dt;
-        const physicsStep = 1/120;
+        var physicsStep = 1/120;
         while (this.physicsTime > 0) {
             this.space.step(physicsStep);
             this.physicsTime -= physicsStep;

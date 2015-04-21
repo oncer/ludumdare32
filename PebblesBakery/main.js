@@ -11,7 +11,7 @@
 /******************************************************************/
 
 // global variables :)
-var g_rollCount = 100;
+var g_rollCount = 0;
 var g_day = -1;
 var g_score = 0;
 
@@ -30,7 +30,7 @@ cc.game.onStart = function(){
     cc.view.resizeWithBrowserSize(true);
     //load resources
     cc.LoaderScene.preload(g_resources, function () {
-        cc.director.runScene(new StoreScene());
+        cc.director.runScene(new TitleScene());
     }, this);
 
     if (cc._renderContext instanceof WebGLRenderingContext) {
