@@ -54,6 +54,7 @@ var sfx = {
 	scream_man4 : "res/sfx/scream_man4.ogg",
 	scream_woman1 : "res/sfx/scream_woman1.ogg",
 	scream_woman2 : "res/sfx/scream_woman2.ogg",
+	gameover : "res/sfx/gameover.ogg",
 };
 
 var g_resources = [];
